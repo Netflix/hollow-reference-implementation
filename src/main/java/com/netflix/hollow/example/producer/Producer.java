@@ -87,7 +87,7 @@ public class Producer {
             
             for(Movie movie : movies) {
                 /// this is thread-safe, and could be done in parallel
-                objectMapper.addObject(movie);
+                objectMapper.add(movie);
             }
             
             publishAndAnnounce();
