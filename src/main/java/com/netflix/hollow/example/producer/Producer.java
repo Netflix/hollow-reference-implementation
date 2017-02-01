@@ -48,7 +48,7 @@ public class Producer {
     private final SourceDataRetriever dataRetriever;
     
     private final HollowWriteStateEngine writeEngine;
-    private final HollowObjectMapper objectMapper;
+    private final HollowObjectMapper hollowMapper;
     
     private long currentCycleId;
     private long previousCycleId;
@@ -60,8 +60,8 @@ public class Producer {
         dataRetriever = new SourceDataRetriever();
 
         writeEngine = new HollowWriteStateEngine();
-        objectMapper = new HollowObjectMapper(writeEngine);
-        objectMapper.initializeTypeState(Movie.class);
+        hollowMapper = new HollowObjectMapper(writeEngine);
+        hollowMapper.initializeTypeState(Movie.class);
         
         previousCycleId = Long.MIN_VALUE;
         currentCycleId = Long.MIN_VALUE;
@@ -87,7 +87,7 @@ public class Producer {
             
             for(Movie movie : movies) {
                 /// this is thread-safe, and could be done in parallel
-                objectMapper.add(movie);
+                hollowMapper.add(movie);
             }
             
             publishAndAnnounce();
