@@ -29,10 +29,8 @@ public class ExampleProducer {
     private HollowProducer hollow;
 
     public static void main(String args[]) throws InterruptedException {
-        File workDir = new File(SCRATCH_DIR, "work-dir");
-        File publishDir = new File(SCRATCH_DIR, "publish-dir");
-        workDir.mkdirs();
-        publishDir.mkdirs();
+        File workDir = makeScratchDir("work-dir");
+        File publishDir = makeScratchDir("publish-dir");
 
         System.out.format("I AM THE PRODUCER.\nI WORK IN %s\nI WILL PUBLISH TO %s\n", workDir.getAbsolutePath(), publishDir.getAbsolutePath());
 
@@ -40,7 +38,7 @@ public class ExampleProducer {
         HollowPublisher publisher = new FilesystemPublisher(workDir, publishDir);
         HollowAnnouncer announcer = new FilesystemAnnouncer(publishDir);
 
-        /// randomly perturb the source data each cycle so that deltas will be produced
+        /// simulate source data changing over time
         final DataMonkey monkey = new DataMonkey();
 
         ExampleProducer producer = new ExampleProducer(new HollowProducer(versionMinter, publisher, announcer));
@@ -76,6 +74,12 @@ public class ExampleProducer {
             }
         });
 
+    }
+
+    private static File makeScratchDir(String child) {
+        File dir = new File(SCRATCH_DIR, child);
+        dir.mkdirs();
+        return dir;
     }
 
     ExampleProducer(HollowProducer hollowProducer) {
