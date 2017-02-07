@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.netflix.hollow.api.StateTransition;
 import com.netflix.hollow.api.client.HollowClient;
 import com.netflix.hollow.api.producer.HollowAnnouncer;
 import com.netflix.hollow.api.producer.HollowProducer;
@@ -82,16 +83,17 @@ public class ExampleProducer {
     }
 
     public void restoreIfAvailable(File publishDir) {
-        System.out.println("ATTEMPTING TO RESTORE PRIOR STATE...");
+        System.out.println("RESTORE PRIOR STATE...");
         try {
-            long latestVersion = new FilesystemAnnouncementWatcher(publishDir).readLatestVersion();
+            StateTransition latest = new FilesystemAnnouncementWatcher(publishDir).readLatestVersion();
 
             HollowClient client = new HollowClient(new FilesystemBlobRetriever(publishDir));
-            client.triggerRefreshTo(latestVersion);
+            client.triggerRefreshTo(latest.getToVersion());
 
             hollow.restoreFrom(client.getStateEngine(), client.getCurrentVersionId());
+            System.out.format("RESUMING DELTA CHAIN AT %s\n", latest);
         } catch(Exception e) {
-            System.out.println("RESTORE NOT AVAILABLE");
+            System.out.println("RESTORE UNAVAILABLE; PRODUCING NEW DELTA CHAIN");
         }
     }
 

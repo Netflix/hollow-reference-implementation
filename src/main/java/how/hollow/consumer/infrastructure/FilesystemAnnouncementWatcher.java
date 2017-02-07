@@ -17,11 +17,13 @@
  */
 package how.hollow.consumer.infrastructure;
 
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import com.netflix.hollow.api.StateTransition;
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
 
 import how.hollow.producer.infrastructure.FilesystemAnnouncer;
@@ -30,16 +32,20 @@ public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
 
     private final File publishDir;
     
-    private long latestVersion;
+    private StateTransition latest;
     
     public FilesystemAnnouncementWatcher(File publishDir) {
         this.publishDir = publishDir;
-        this.latestVersion = readLatestVersion();
+        this.latest = readLatestVersion();
     }
     
     @Override
     public long getLatestVersion() {
-        return latestVersion;
+        return latest.getToVersion();
+    }
+
+    public StateTransition getLatest() {
+        return latest;
     }
 
     @Override
@@ -48,9 +54,9 @@ public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
             public void run() {
                 while(true) {
                     try {
-                        long currentVersion = readLatestVersion();
-                        if(latestVersion != currentVersion) {
-                            latestVersion = currentVersion;
+                        StateTransition currentVersion = readLatestVersion();
+                        if(latest.getToVersion() != currentVersion.getToVersion()) {
+                            latest = currentVersion;
                             triggerAsyncRefresh();
                         }
                         
@@ -66,11 +72,11 @@ public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
         t.start();
     }
     
-    public long readLatestVersion() {
+    public StateTransition readLatestVersion() {
         File f = new File(publishDir, FilesystemAnnouncer.ANNOUNCEMENT_FILENAME);
         
         try(BufferedReader reader = new BufferedReader(new FileReader(f))) {
-            return Long.parseLong(reader.readLine());
+            return new StateTransition(Long.parseLong(reader.readLine()));
         } catch(IOException e) {
         	throw new RuntimeException(e);
         }
