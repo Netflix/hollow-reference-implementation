@@ -17,8 +17,9 @@
  */
 package how.hollow.producer.datamodel;
 
-import com.netflix.hollow.core.write.objectmapper.HollowHashKey;
 import java.util.Set;
+
+import com.netflix.hollow.core.write.objectmapper.HollowHashKey;
 
 public class Movie {
 

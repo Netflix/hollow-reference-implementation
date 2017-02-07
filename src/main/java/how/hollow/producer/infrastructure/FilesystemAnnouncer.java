@@ -17,12 +17,13 @@
  */
 package how.hollow.producer.infrastructure;
 
-import how.hollow.producer.Announcer;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class FilesystemAnnouncer implements Announcer {
+import com.netflix.hollow.api.producer.HollowAnnouncer;
+
+public class FilesystemAnnouncer implements HollowAnnouncer {
 
     public static final String ANNOUNCEMENT_FILENAME = "announced.version";
     

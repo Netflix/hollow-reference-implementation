@@ -17,12 +17,13 @@
  */
 package how.hollow.consumer.api;
 
-import com.netflix.hollow.api.codegen.HollowAPIGenerator;
-import com.netflix.hollow.core.write.HollowWriteStateEngine;
-import com.netflix.hollow.core.write.objectmapper.HollowObjectMapper;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+
+import com.netflix.hollow.api.codegen.HollowAPIGenerator;
+import com.netflix.hollow.core.write.HollowWriteStateEngine;
+import com.netflix.hollow.core.write.objectmapper.HollowObjectMapper;
 
 public class APIGenerator {
     

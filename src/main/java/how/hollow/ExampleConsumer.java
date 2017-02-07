@@ -15,28 +15,29 @@
  *     limitations under the License.
  *
  */
-package how.hollow.consumer;
+package com.netflix.hollow.example;
+
+import java.io.File;
 
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
 import com.netflix.hollow.api.client.HollowBlobRetriever;
 import com.netflix.hollow.api.client.HollowClient;
 import com.netflix.hollow.api.client.HollowClientMemoryConfig;
 import com.netflix.hollow.core.read.engine.HollowReadStateEngine;
+import com.netflix.hollow.history.ui.jetty.HollowHistoryUIServer;
+
 import how.hollow.consumer.api.generated.MovieAPI;
 import how.hollow.consumer.api.generated.MovieAPIFactory;
 import how.hollow.consumer.history.ConsumerHistoryListener;
 import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
 import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
-import how.hollow.producer.Producer;
-import com.netflix.hollow.history.ui.jetty.HollowHistoryUIServer;
-import java.io.File;
 
-public class Consumer {
+public class ExampleConsumer {
     
     private final HollowClient client;
     private final ConsumerHistoryListener historyListener;
     
-    public Consumer(HollowBlobRetriever blobRetriever, HollowAnnouncementWatcher announcementWatcher) {
+    public ExampleConsumer(HollowBlobRetriever blobRetriever, HollowAnnouncementWatcher announcementWatcher) {
     	this.historyListener = new ConsumerHistoryListener();
     	
         this.client = new HollowClient(
@@ -58,14 +59,14 @@ public class Consumer {
     }
     
     public static void main(String args[]) throws Exception {
-        File publishDir = new File(Producer.SCRATCH_DIR, "publish-dir");
+        File publishDir = new File(ExampleProducer.SCRATCH_DIR, "publish-dir");
         
         System.out.println("I AM THE CONSUMER.  I WILL READ FROM " + publishDir.getAbsolutePath());
 
         HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
         HollowAnnouncementWatcher announcementWatcher = new FilesystemAnnouncementWatcher(publishDir);
         
-        Consumer consumer = new Consumer(blobRetriever, announcementWatcher);
+        ExampleConsumer consumer = new ExampleConsumer(blobRetriever, announcementWatcher);
         
         HollowHistoryUIServer historyUIServer = new HollowHistoryUIServer(consumer.historyListener.getHistory(), 7777);
         historyUIServer.start();

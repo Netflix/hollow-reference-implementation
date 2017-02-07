@@ -1,9 +1,9 @@
 package how.hollow.consumer.api.generated;
 
-import com.netflix.hollow.api.objects.provider.HollowFactory;
-import com.netflix.hollow.core.read.dataaccess.HollowTypeDataAccess;
 import com.netflix.hollow.api.custom.HollowTypeAPI;
 import com.netflix.hollow.api.objects.delegate.HollowSetCachedDelegate;
+import com.netflix.hollow.api.objects.provider.HollowFactory;
+import com.netflix.hollow.core.read.dataaccess.HollowTypeDataAccess;
 
 @SuppressWarnings("all")
 public class SetOfActorHollowFactory<T extends SetOfActorHollow> extends HollowFactory<T> {

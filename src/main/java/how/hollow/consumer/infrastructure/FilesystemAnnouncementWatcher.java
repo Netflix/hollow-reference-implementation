@@ -17,12 +17,14 @@
  */
 package how.hollow.consumer.infrastructure;
 
-import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
-import how.hollow.producer.infrastructure.FilesystemAnnouncer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+
+import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
+
+import how.hollow.producer.infrastructure.FilesystemAnnouncer;
 
 public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
 

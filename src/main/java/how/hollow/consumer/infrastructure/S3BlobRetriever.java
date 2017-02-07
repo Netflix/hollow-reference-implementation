@@ -17,6 +17,21 @@
  */
 package how.hollow.consumer.infrastructure;
 
+import static how.hollow.producer.infrastructure.S3Blob.Kind.DELTA;
+import static how.hollow.producer.infrastructure.S3Blob.Kind.SNAPSHOT;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+
+import org.apache.commons.io.IOUtils;
+
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -27,17 +42,8 @@ import com.amazonaws.util.Base16Lower;
 import com.netflix.hollow.api.client.HollowBlob;
 import com.netflix.hollow.api.client.HollowBlobRetriever;
 import com.netflix.hollow.core.memory.encoding.VarInt;
+
 import how.hollow.producer.infrastructure.S3Publisher;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import org.apache.commons.io.IOUtils;
 
 public class S3BlobRetriever implements HollowBlobRetriever {
 
@@ -109,21 +115,33 @@ public class S3BlobRetriever implements HollowBlobRetriever {
     }
 
     private HollowBlob knownSnapshotBlob(long desiredVersion) {
-        String objectName = S3Publisher.getS3ObjectName(blobNamespace, "snapshot", desiredVersion);
+        String objectName = snapshotBlobObjectName(desiredVersion);
         ObjectMetadata objectMetadata = s3.getObjectMetadata(bucketName, objectName);
         long toState = Long.parseLong(objectMetadata.getUserMetaDataOf("to_state"));
 
         return new S3Blob(objectName, toState);
     }
-    
+
+    private String snapshotBlobObjectName(long desiredVersion) {
+        // FIXME: timt: make HollowBlob and S3Blob usable from both producer and consumer APIs
+        return SNAPSHOT.getS3ObjectName(blobNamespace, desiredVersion);
+    }
+
     private HollowBlob knownDeltaBlob(String fileType, long fromVersion) {
-        String objectName = S3Publisher.getS3ObjectName(blobNamespace, fileType, fromVersion);
+        String objectName = deltaBlobObjectName(fileType, fromVersion);
         ObjectMetadata objectMetadata = s3.getObjectMetadata(bucketName, objectName);
         long fromState = Long.parseLong(objectMetadata.getUserMetaDataOf("from_state"));
         long toState = Long.parseLong(objectMetadata.getUserMetaDataOf("to_state"));
 
         return new S3Blob(objectName, fromState, toState);
     }
+
+    private String deltaBlobObjectName(String fileType, long fromVersion) {
+        // FIXME: timt: make HollowBlob and S3Blob usable from both producer and consumer APIs
+        // FIXME: timt: lookup DELTA or REVERSE_DELTA based on fileType
+        return DELTA.getS3ObjectName(blobNamespace, fromVersion);
+    }
+
 
     private class S3Blob extends HollowBlob {
 

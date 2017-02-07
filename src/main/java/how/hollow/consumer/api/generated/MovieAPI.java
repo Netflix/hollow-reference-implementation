@@ -2,26 +2,23 @@ package how.hollow.consumer.api.generated;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
+
 import com.netflix.hollow.api.custom.HollowAPI;
-import com.netflix.hollow.core.read.dataaccess.HollowDataAccess;
-import com.netflix.hollow.core.read.dataaccess.HollowTypeDataAccess;
-import com.netflix.hollow.core.read.dataaccess.HollowObjectTypeDataAccess;
-import com.netflix.hollow.core.read.dataaccess.HollowListTypeDataAccess;
-import com.netflix.hollow.core.read.dataaccess.HollowSetTypeDataAccess;
-import com.netflix.hollow.core.read.dataaccess.HollowMapTypeDataAccess;
-import com.netflix.hollow.core.read.dataaccess.missing.HollowObjectMissingDataAccess;
-import com.netflix.hollow.core.read.dataaccess.missing.HollowListMissingDataAccess;
-import com.netflix.hollow.core.read.dataaccess.missing.HollowSetMissingDataAccess;
-import com.netflix.hollow.core.read.dataaccess.missing.HollowMapMissingDataAccess;
 import com.netflix.hollow.api.objects.provider.HollowFactory;
-import com.netflix.hollow.api.objects.provider.HollowObjectProvider;
 import com.netflix.hollow.api.objects.provider.HollowObjectCacheProvider;
 import com.netflix.hollow.api.objects.provider.HollowObjectFactoryProvider;
+import com.netflix.hollow.api.objects.provider.HollowObjectProvider;
 import com.netflix.hollow.api.sampling.HollowObjectCreationSampler;
 import com.netflix.hollow.api.sampling.HollowSamplingDirector;
 import com.netflix.hollow.api.sampling.SampleResult;
+import com.netflix.hollow.core.read.dataaccess.HollowDataAccess;
+import com.netflix.hollow.core.read.dataaccess.HollowObjectTypeDataAccess;
+import com.netflix.hollow.core.read.dataaccess.HollowSetTypeDataAccess;
+import com.netflix.hollow.core.read.dataaccess.HollowTypeDataAccess;
+import com.netflix.hollow.core.read.dataaccess.missing.HollowObjectMissingDataAccess;
+import com.netflix.hollow.core.read.dataaccess.missing.HollowSetMissingDataAccess;
 import com.netflix.hollow.core.util.AllHollowRecordCollection;
 
 @SuppressWarnings("all")

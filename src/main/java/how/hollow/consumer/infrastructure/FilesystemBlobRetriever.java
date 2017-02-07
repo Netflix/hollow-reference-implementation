@@ -17,13 +17,14 @@
  */
 package how.hollow.consumer.infrastructure;
 
-import com.netflix.hollow.api.client.HollowBlob;
-import com.netflix.hollow.api.client.HollowBlobRetriever;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import com.netflix.hollow.api.client.HollowBlob;
+import com.netflix.hollow.api.client.HollowBlobRetriever;
 
 public class FilesystemBlobRetriever implements HollowBlobRetriever {
     

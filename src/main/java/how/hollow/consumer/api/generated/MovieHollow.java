@@ -1,7 +1,6 @@
 package how.hollow.consumer.api.generated;
 
 import com.netflix.hollow.api.objects.HollowObject;
-import com.netflix.hollow.core.schema.HollowObjectSchema;
 
 @SuppressWarnings("all")
 public class MovieHollow extends HollowObject {

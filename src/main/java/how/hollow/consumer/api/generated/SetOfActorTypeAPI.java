@@ -1,9 +1,8 @@
 package how.hollow.consumer.api.generated;
 
 import com.netflix.hollow.api.custom.HollowSetTypeAPI;
-
-import com.netflix.hollow.core.read.dataaccess.HollowSetTypeDataAccess;
 import com.netflix.hollow.api.objects.delegate.HollowSetLookupDelegate;
+import com.netflix.hollow.core.read.dataaccess.HollowSetTypeDataAccess;
 
 @SuppressWarnings("all")
 public class SetOfActorTypeAPI extends HollowSetTypeAPI {

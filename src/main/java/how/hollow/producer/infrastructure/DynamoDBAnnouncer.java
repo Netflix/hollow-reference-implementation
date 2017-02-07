@@ -24,9 +24,9 @@ import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
-import how.hollow.producer.Announcer;
+import com.netflix.hollow.api.producer.HollowAnnouncer;
 
-public class DynamoDBAnnouncer implements Announcer {
+public class DynamoDBAnnouncer implements HollowAnnouncer {
 
     private final DynamoDB dynamoDB;
     private final String tableName;
