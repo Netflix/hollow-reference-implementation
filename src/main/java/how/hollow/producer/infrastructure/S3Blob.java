@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.netflix.hollow.api.StateTransition;
+import com.netflix.hollow.api.HollowStateTransition;
 import com.netflix.hollow.api.producer.HollowBlob;
 import com.netflix.hollow.core.memory.encoding.HashCodes;
 
@@ -18,23 +18,23 @@ public final class S3Blob implements HollowBlob {
 
     private final S3Blob.Kind kind;
     private final String namespace;
-    final StateTransition transition;
-    final File file;
+    final HollowStateTransition transition;
+    final File product;
     private OutputStream out;
 
-    S3Blob(S3Blob.Kind kind, String namespace, File parent, StateTransition transition) {
+    S3Blob(S3Blob.Kind kind, String namespace, File parent, HollowStateTransition transition) {
         this.kind = kind;
         this.namespace = namespace;
         this.transition = transition;
-        this.file = kind.getScratchFile(parent, namespace, transition);
+        this.product = kind.getScratchFile(parent, namespace, transition);
     }
 
     @Override
     public OutputStream getOutputStream() {
         try {
-            File parent = file.getParentFile();
+            File parent = product.getParentFile();
             if(!parent.exists()) parent.mkdirs();
-            out = new BufferedOutputStream(new FileOutputStream(file));
+            out = new BufferedOutputStream(new FileOutputStream(product));
         } catch(FileNotFoundException ex) {
             throw new RuntimeException(ex);
         }
@@ -42,14 +42,9 @@ public final class S3Blob implements HollowBlob {
     }
 
     @Override
-    public void finish() {
-        closeOutputStream();
-    }
-
-    @Override
     public void close() {
         closeOutputStream();
-        file.delete();
+        product.delete();
     }
 
     boolean isSnapshot() {
@@ -62,7 +57,7 @@ public final class S3Blob implements HollowBlob {
 
     ObjectMetadata getS3ObjectMetadata() {
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setHeader("Content-Length", file.length());
+        metadata.setHeader("Content-Length", product.length());
         kind.populateObjectMetadata(transition, metadata);
         return metadata;
     }
@@ -90,7 +85,7 @@ public final class S3Blob implements HollowBlob {
             this.prefix = prefix;
         }
 
-        public void populateObjectMetadata(StateTransition transition, ObjectMetadata metadata) {
+        public void populateObjectMetadata(HollowStateTransition transition, ObjectMetadata metadata) {
             switch(this) {
             case SNAPSHOT:
                 metadata.addUserMetadata("to_state", String.valueOf(transition.getToVersion()));
@@ -106,12 +101,12 @@ public final class S3Blob implements HollowBlob {
             }
         }
 
-        private void populateDeltaMetadata(StateTransition transition, ObjectMetadata metadata) {
+        private void populateDeltaMetadata(HollowStateTransition transition, ObjectMetadata metadata) {
             metadata.addUserMetadata("from_state", String.valueOf(transition.getFromVersion()));
             metadata.addUserMetadata("to_state", String.valueOf(transition.getToVersion()));
         }
 
-        private File getScratchFile(File parent, String namespace, StateTransition transition) {
+        private File getScratchFile(File parent, String namespace, HollowStateTransition transition) {
             String pattern;
             switch(this) {
             case SNAPSHOT:
@@ -139,7 +134,7 @@ public final class S3Blob implements HollowBlob {
                     .toString();
         }
 
-        public String getS3ObjectName(String blobNamespace, StateTransition transition) {
+        public String getS3ObjectName(String blobNamespace, HollowStateTransition transition) {
             return getS3ObjectName(blobNamespace, transition.getToVersion());
         }
 

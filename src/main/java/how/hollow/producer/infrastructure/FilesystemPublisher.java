@@ -17,46 +17,44 @@
  */
 package how.hollow.producer.infrastructure;
 
-
+import static java.nio.file.Files.deleteIfExists;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-import org.apache.commons.io.IOUtils;
-
-import com.netflix.hollow.api.StateTransition;
+import com.netflix.hollow.api.HollowStateTransition;
 import com.netflix.hollow.api.producer.HollowBlob;
 import com.netflix.hollow.api.producer.HollowPublisher;
 
 public class FilesystemPublisher implements HollowPublisher {
 
-    private final File productDir;
-    private final File publishDir;
+    private final Path productDir;
+    private final Path publishDir;
 
-    public FilesystemPublisher(File productDir, File publishDir) {
+    public FilesystemPublisher(Path productDir, Path publishDir) {
         this.productDir = productDir;
         this.publishDir = publishDir;
     }
 
     @Override
-    public HollowBlob openSnapshot(StateTransition transition) {
-        String filename = String.format("snapshot-%d", transition.getToVersion());
-        return new FilesystemBlob(new File(productDir, filename));
+    public HollowBlob openSnapshot(HollowStateTransition transition) {
+        Path snapshotPath = productDir.resolve(String.format("snapshot-%d", transition.getToVersion()));
+        return new FilesystemBlob(snapshotPath);
     }
 
     @Override
-    public HollowBlob openDelta(StateTransition transition) {
+    public HollowBlob openDelta(HollowStateTransition transition) {
         return openDeltaBlob(transition, "delta");
     }
 
     @Override
-    public HollowBlob openReverseDelta(StateTransition transition) {
+    public HollowBlob openReverseDelta(HollowStateTransition transition) {
         return openDeltaBlob(transition.reverse(), "reversedelta");
     }
 
@@ -65,70 +63,62 @@ public class FilesystemPublisher implements HollowPublisher {
         publishBlob((FilesystemBlob)blob);
     }
 
-    private HollowBlob openDeltaBlob(StateTransition transition, String fileType) {
-        String filename = String.format("%s-%d-%d", fileType, transition.getFromVersion(), transition.getToVersion());
-        return new FilesystemBlob(new File(productDir, filename));
+    private HollowBlob openDeltaBlob(HollowStateTransition transition, String fileType) {
+        Path deltaPath = productDir.resolve(String.format("%s-%d-%d",
+                fileType,
+                transition.getFromVersion(),
+                transition.getToVersion()));
+        return new FilesystemBlob(deltaPath);
     }
 
     private void publishBlob(FilesystemBlob blob) {
-        copyFile(blob.getScratchFile(), blob.getPublishedFile(publishDir));
-    }
-
-    private void copyFile(File sourceFile, File destFile) {
-        try(InputStream is = new FileInputStream(sourceFile);
-                OutputStream os = new FileOutputStream(destFile)) {
-            IOUtils.copy(is, os);
-        } catch(IOException e) {
-            throw new RuntimeException("Unable to publish file!", e);
+        try {
+            Path source = blob.getProductPath();
+            Path filename = source.getFileName();
+            Path dest = publishDir.resolve(filename);
+            Path intermediate = dest.resolveSibling(filename + ".incomplete");
+            Files.copy(source, intermediate, REPLACE_EXISTING);
+            Files.move(intermediate, dest, ATOMIC_MOVE);
+        } catch(IOException ex) {
+            throw new RuntimeException("Unable to publish file!", ex);
         }
     }
 
     private static final class FilesystemBlob implements HollowBlob {
 
-        private final File product;
+        private final Path product;
         private BufferedOutputStream out;
 
-        FilesystemBlob(File product) {
+        FilesystemBlob(Path product) {
             this.product = product;
         }
 
         @Override
         public OutputStream getOutputStream() {
             try {
-                out = new BufferedOutputStream(new FileOutputStream(product));
+                out = new BufferedOutputStream(newOutputStream(product));
+                //out = new BufferedOutputStream(newOutputStream(product));
                 return out;
-            } catch(FileNotFoundException ex) {
+            } catch(IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
 
         @Override
-        public void finish() {
-            closeOutputStream();
-        }
-
-        @Override
         public void close() {
-            closeOutputStream();
-            product.delete();
-        }
-
-        File getScratchFile() {
-            return product;
-        }
-
-        File getPublishedFile(File publishDir) {
-            return new File(publishDir, product.getName());
-        }
-
-        private void closeOutputStream() {
             if(out != null) {
                 try {
                     out.close();
+                    out = null;
+                    deleteIfExists(product);
                 } catch(IOException ex) {
                     throw new RuntimeException(ex);
                 }
             }
+        }
+
+        Path getProductPath() {
+            return product;
         }
     }
 }

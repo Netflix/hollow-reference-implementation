@@ -17,9 +17,13 @@
  */
 package how.hollow.producer.infrastructure;
 
-import java.io.File;
-import java.io.FileWriter;
+import static java.nio.file.Files.newBufferedWriter;
+import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.WRITE;
+
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import com.netflix.hollow.api.producer.HollowAnnouncer;
 
@@ -27,20 +31,21 @@ public class FilesystemAnnouncer implements HollowAnnouncer {
 
     public static final String ANNOUNCEMENT_FILENAME = "announced.version";
     
-    private final File publishDir;
+    private final Path publishDir;
 
-    public FilesystemAnnouncer(File publishDir) {
+    public FilesystemAnnouncer(Path publishDir) {
         this.publishDir = publishDir;
     }
 
     @Override
     public void announce(long stateVersion) {
-        File announceFile = new File(publishDir, ANNOUNCEMENT_FILENAME);
+        Path annnouncementPath = publishDir.resolve(ANNOUNCEMENT_FILENAME);
         
-        try (FileWriter writer = new FileWriter(announceFile)){
+        try (BufferedWriter writer = newBufferedWriter(annnouncementPath, CREATE, WRITE, TRUNCATE_EXISTING, DSYNC)){
             writer.write(String.valueOf(stateVersion));
         } catch(IOException ex) {
             throw new RuntimeException("Unable to write to announcement file", ex);
         }
     }
+
 }

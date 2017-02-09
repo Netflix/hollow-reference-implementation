@@ -1,5 +1,6 @@
 package how.hollow.producer.util;
 
+import static com.netflix.hollow.api.producer.HollowProducer.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,6 +9,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import com.netflix.hollow.api.HollowStateTransition;
+import com.netflix.hollow.core.write.HollowWriteStateEngine;
+import com.netflix.hollow.core.write.objectmapper.HollowObjectMapper;
 
 import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
@@ -45,12 +50,22 @@ public class DataMonkey {
         this.movieMonkey = movieMonkey;
     }
 
+    public WriteState introduceChaos(WriteState writeState) {
+        return new ChaoticWriteState(writeState, this);
+    }
+
     public Actor ook(Actor actor) {
         return actorMonkey.ook(actor);
     }
 
     public Movie ook(Movie movie) {
         return movieMonkey.ook(movie);
+    }
+
+    public Object ook(Object o) {
+        if(o instanceof Actor) return ook((Actor)o);
+        if(o instanceof Movie) return ook((Movie) o);
+        return o;
     }
 
     public static interface Monkey<T> {
@@ -85,6 +100,50 @@ public class DataMonkey {
                 while(it.hasNext()) sb.append(' ').append(it.next());
                 return sb.toString();
             }
+        }
+    }
+
+    private static final class ChaoticWriteState implements WriteState {
+        private final HollowObjectMapper chaoticObjectMapper;
+        private final HollowStateTransition transition;
+
+        ChaoticWriteState(WriteState writeState, DataMonkey monkey) {
+            transition = writeState.getTransition();
+            chaoticObjectMapper = new ChaoticObjectMapper(writeState.getStateEngine(), monkey);
+        }
+
+        @Override
+        public int add(Object o) {
+            return chaoticObjectMapper.add(o);
+        }
+
+        @Override
+        public HollowObjectMapper getObjectMapper() {
+            return chaoticObjectMapper;
+        }
+
+        @Override
+        public HollowWriteStateEngine getStateEngine() {
+            return chaoticObjectMapper.getStateEngine();
+        }
+
+        @Override
+        public HollowStateTransition getTransition() {
+            return transition;
+        }
+    }
+
+    private static final class ChaoticObjectMapper extends HollowObjectMapper {
+        private final DataMonkey monkey;
+
+        ChaoticObjectMapper(HollowWriteStateEngine stateEngine, DataMonkey monkey) {
+            super(stateEngine);
+            this.monkey = monkey;
+        }
+
+        @Override
+        public int add(Object o) {
+            return super.add(monkey.ook(o));
         }
     }
 

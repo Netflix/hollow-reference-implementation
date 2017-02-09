@@ -40,7 +40,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
-import com.netflix.hollow.api.StateTransition;
+import com.netflix.hollow.api.HollowStateTransition;
 import com.netflix.hollow.api.producer.HollowBlob;
 import com.netflix.hollow.api.producer.HollowPublisher;
 import com.netflix.hollow.core.memory.encoding.VarInt;
@@ -65,17 +65,17 @@ public class S3Publisher implements HollowPublisher {
     }
 
     @Override
-    public HollowBlob openSnapshot(StateTransition transition) {
+    public HollowBlob openSnapshot(HollowStateTransition transition) {
         return new S3Blob(SNAPSHOT, blobNamespace, scratchDir, transition);
     }
 
     @Override
-    public HollowBlob openDelta(StateTransition transition) {
+    public HollowBlob openDelta(HollowStateTransition transition) {
         return new S3Blob(DELTA, blobNamespace, scratchDir, transition);
     }
 
     @Override
-    public HollowBlob openReverseDelta(StateTransition transition) {
+    public HollowBlob openReverseDelta(HollowStateTransition transition) {
         return new S3Blob(REVERSE_DELTA, blobNamespace, scratchDir, transition);
     }
 
@@ -86,7 +86,7 @@ public class S3Publisher implements HollowPublisher {
 
     private void uploadBlob(S3Blob s3Blob) {
         /// upload blob to S3
-        try (InputStream is = new BufferedInputStream(new FileInputStream(s3Blob.file))) {
+        try (InputStream is = new BufferedInputStream(new FileInputStream(s3Blob.product))) {
             Upload upload = s3TransferManager.upload(bucketName, s3Blob.getS3ObjectName(), is, s3Blob.getS3ObjectMetadata());
             upload.waitForCompletion();
         } catch (Exception e) {
@@ -112,7 +112,7 @@ public class S3Publisher implements HollowPublisher {
      * Write a list of all of the state versions to S3.
      * @param newVersion
      */
-    private synchronized void updateSnapshotIndex(StateTransition transition) {
+    private synchronized void updateSnapshotIndex(HollowStateTransition transition) {
         /// insert the new version into the list
         int idx = Collections.binarySearch(snapshotIndex, transition.getToVersion());
         int insertionPoint = Math.abs(idx) - 1;

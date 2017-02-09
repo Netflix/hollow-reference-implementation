@@ -15,9 +15,11 @@
  *     limitations under the License.
  *
  */
-package com.netflix.hollow.example;
+package how.hollow;
 
-import java.io.File;
+import static java.lang.System.out;
+
+import java.nio.file.Path;
 
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
 import com.netflix.hollow.api.client.HollowBlobRetriever;
@@ -31,46 +33,47 @@ import how.hollow.consumer.api.generated.MovieAPIFactory;
 import how.hollow.consumer.history.ConsumerHistoryListener;
 import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
 import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
+import how.hollow.producer.util.ScratchPaths;
 
-public class ExampleConsumer {
-    
+public class BasicConsumer {
+
+    public static void main(String args[]) throws Exception {
+        Path publishDir = ScratchPaths.makePublishDir(args.length == 0 ? "basic" : args[0]);
+
+        out.println("I AM THE CONSUMER.  I WILL READ FROM " + publishDir);
+
+        HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
+        HollowAnnouncementWatcher announcementWatcher = new FilesystemAnnouncementWatcher(publishDir);
+
+        BasicConsumer consumer = new BasicConsumer(blobRetriever, announcementWatcher);
+
+        HollowHistoryUIServer historyUIServer = new HollowHistoryUIServer(consumer.historyListener.getHistory(), 7777);
+        historyUIServer.start();
+        historyUIServer.join();
+    }
+
     private final HollowClient client;
     private final ConsumerHistoryListener historyListener;
-    
-    public ExampleConsumer(HollowBlobRetriever blobRetriever, HollowAnnouncementWatcher announcementWatcher) {
-    	this.historyListener = new ConsumerHistoryListener();
-    	
+
+    public BasicConsumer(HollowBlobRetriever blobRetriever, HollowAnnouncementWatcher announcementWatcher) {
+        this.historyListener = new ConsumerHistoryListener();
+
         this.client = new HollowClient(
                 blobRetriever, 
                 announcementWatcher, 
                 historyListener, 
                 new MovieAPIFactory(), 
                 HollowClientMemoryConfig.DEFAULT_CONFIG);
-        
+
         client.triggerRefresh();
     }
-    
+
     public MovieAPI getAPI() {
         return (MovieAPI) client.getAPI();
     }
-    
+
     public HollowReadStateEngine getStateEngine() {
         return client.getStateEngine();
     }
-    
-    public static void main(String args[]) throws Exception {
-        File publishDir = new File(ExampleProducer.SCRATCH_DIR, "publish-dir");
-        
-        System.out.println("I AM THE CONSUMER.  I WILL READ FROM " + publishDir.getAbsolutePath());
 
-        HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
-        HollowAnnouncementWatcher announcementWatcher = new FilesystemAnnouncementWatcher(publishDir);
-        
-        ExampleConsumer consumer = new ExampleConsumer(blobRetriever, announcementWatcher);
-        
-        HollowHistoryUIServer historyUIServer = new HollowHistoryUIServer(consumer.historyListener.getHistory(), 7777);
-        historyUIServer.start();
-        historyUIServer.join();
-    }
-    
 }

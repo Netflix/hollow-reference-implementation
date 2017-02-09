@@ -17,35 +17,30 @@
  */
 package how.hollow.consumer.infrastructure;
 
+import static how.hollow.producer.infrastructure.FilesystemAnnouncer.ANNOUNCEMENT_FILENAME;
+import static java.nio.file.Files.newBufferedReader;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 
-import com.netflix.hollow.api.StateTransition;
+import com.netflix.hollow.api.HollowStateTransition;
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
-
-import how.hollow.producer.infrastructure.FilesystemAnnouncer;
 
 public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
 
-    private final File publishDir;
-    
-    private StateTransition latest;
-    
-    public FilesystemAnnouncementWatcher(File publishDir) {
+    private final Path publishDir;
+
+    private long latestVersion;
+
+    public FilesystemAnnouncementWatcher(Path publishDir) {
         this.publishDir = publishDir;
-        this.latest = readLatestVersion();
-    }
-    
-    @Override
-    public long getLatestVersion() {
-        return latest.getToVersion();
+        this.latestVersion = readLatestVersion();
     }
 
-    public StateTransition getLatest() {
-        return latest;
+    @Override
+    public long getLatestVersion() {
+        return latestVersion;
     }
 
     @Override
@@ -54,31 +49,30 @@ public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
             public void run() {
                 while(true) {
                     try {
-                        StateTransition currentVersion = readLatestVersion();
-                        if(latest.getToVersion() != currentVersion.getToVersion()) {
-                            latest = currentVersion;
+                        long currentVersion = readLatestVersion();
+                        if(latestVersion != currentVersion) {
+                            latestVersion = currentVersion;
                             triggerAsyncRefresh();
                         }
-                        
-                            Thread.sleep(1000);
+
+                        Thread.sleep(1000);
                     } catch(Throwable th) { 
                         th.printStackTrace();
                     }
                 }
             }
         });
-        
+
         t.setDaemon(true);
         t.start();
     }
-    
-    public StateTransition readLatestVersion() {
-        File f = new File(publishDir, FilesystemAnnouncer.ANNOUNCEMENT_FILENAME);
-        
-        try(BufferedReader reader = new BufferedReader(new FileReader(f))) {
-            return new StateTransition(Long.parseLong(reader.readLine()));
+
+    public long readLatestVersion() {
+        Path announcementPath = publishDir.resolve(ANNOUNCEMENT_FILENAME);
+        try(BufferedReader reader = newBufferedReader(announcementPath)) {
+            return Long.parseLong(reader.readLine());
         } catch(IOException e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
