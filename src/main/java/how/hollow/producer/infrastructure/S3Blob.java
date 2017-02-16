@@ -2,11 +2,14 @@ package how.hollow.producer.infrastructure;
 
 import static how.hollow.producer.infrastructure.S3Blob.Kind.SNAPSHOT;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -20,6 +23,7 @@ public final class S3Blob implements HollowProducer.Blob {
     final HollowProducer.Transition transition;
     final File product;
     private OutputStream out;
+    private BufferedInputStream in;
 
     S3Blob(S3Blob.Kind kind, String namespace, File parent, HollowProducer.Transition transition) {
         this.kind = kind;
@@ -41,8 +45,28 @@ public final class S3Blob implements HollowProducer.Blob {
     }
 
     @Override
+    public InputStream getInputStream() {
+        try {
+            in = new BufferedInputStream(new FileInputStream(product));
+        } catch(IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        return in;
+    }
+
+    @Override
     public void close() {
-        closeOutputStream();
+        try {
+            // FIXME: timt: failure while closing `out` will leave `in` opened
+            if(out != null) out.close();
+            out = null;
+            if(in != null) in.close();
+            in = null;
+        } catch(IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        // FIXME: timt: we products lingering a bit longer so that we can round-trip them into read states
+        //    without having to fetch the blobs we just published
         product.delete();
     }
 
@@ -59,17 +83,6 @@ public final class S3Blob implements HollowProducer.Blob {
         metadata.setHeader("Content-Length", product.length());
         kind.populateObjectMetadata(transition, metadata);
         return metadata;
-    }
-
-    private void closeOutputStream() {
-        if(out != null) {
-            try {
-                out.close();
-                out = null;
-            } catch(IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
     }
 
     public static enum Kind {
