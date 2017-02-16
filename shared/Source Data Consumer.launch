@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/hollow-reference-implementation/src/main/java/how/hollow/ReferenceConsumer.java"/>
+<listEntry value="/hollow-reference-implementation/src/main/java/how/hollow/BasicConsumer.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
@@ -11,7 +11,7 @@
 <listEntry value="org.eclipse.debug.ui.launchGroup.run"/>
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="how.hollow.ReferenceConsumer"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="how.hollow.BasicConsumer"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="sourcedata"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="hollow-reference-implementation"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.io.tmpdir=/space/hollowref"/>
