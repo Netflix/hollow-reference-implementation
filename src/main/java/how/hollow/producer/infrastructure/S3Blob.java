@@ -10,19 +10,18 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.netflix.hollow.api.HollowStateTransition;
-import com.netflix.hollow.api.producer.HollowBlob;
+import com.netflix.hollow.api.producer.HollowProducer;
 import com.netflix.hollow.core.memory.encoding.HashCodes;
 
-public final class S3Blob implements HollowBlob {
+public final class S3Blob implements HollowProducer.Blob {
 
     private final S3Blob.Kind kind;
     private final String namespace;
-    final HollowStateTransition transition;
+    final HollowProducer.Transition transition;
     final File product;
     private OutputStream out;
 
-    S3Blob(S3Blob.Kind kind, String namespace, File parent, HollowStateTransition transition) {
+    S3Blob(S3Blob.Kind kind, String namespace, File parent, HollowProducer.Transition transition) {
         this.kind = kind;
         this.namespace = namespace;
         this.transition = transition;
@@ -85,7 +84,7 @@ public final class S3Blob implements HollowBlob {
             this.prefix = prefix;
         }
 
-        public void populateObjectMetadata(HollowStateTransition transition, ObjectMetadata metadata) {
+        public void populateObjectMetadata(HollowProducer.Transition transition, ObjectMetadata metadata) {
             switch(this) {
             case SNAPSHOT:
                 metadata.addUserMetadata("to_state", String.valueOf(transition.getToVersion()));
@@ -101,12 +100,12 @@ public final class S3Blob implements HollowBlob {
             }
         }
 
-        private void populateDeltaMetadata(HollowStateTransition transition, ObjectMetadata metadata) {
+        private void populateDeltaMetadata(HollowProducer.Transition transition, ObjectMetadata metadata) {
             metadata.addUserMetadata("from_state", String.valueOf(transition.getFromVersion()));
             metadata.addUserMetadata("to_state", String.valueOf(transition.getToVersion()));
         }
 
-        private File getScratchFile(File parent, String namespace, HollowStateTransition transition) {
+        private File getScratchFile(File parent, String namespace, HollowProducer.Transition transition) {
             String pattern;
             switch(this) {
             case SNAPSHOT:
@@ -134,7 +133,7 @@ public final class S3Blob implements HollowBlob {
                     .toString();
         }
 
-        public String getS3ObjectName(String blobNamespace, HollowStateTransition transition) {
+        public String getS3ObjectName(String blobNamespace, HollowProducer.Transition transition) {
             return getS3ObjectName(blobNamespace, transition.getToVersion());
         }
 

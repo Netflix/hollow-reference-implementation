@@ -22,7 +22,8 @@ import static how.hollow.producer.util.ScratchPaths.makePublishDir;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -38,23 +39,20 @@ import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
 import how.hollow.producer.infrastructure.FilesystemAnnouncer;
 import how.hollow.producer.infrastructure.FilesystemPublisher;
+import how.hollow.producer.sourcedata.SourceData;
 import how.hollow.producer.util.DataMonkey;
 import how.hollow.producer.util.StandardStreamsLogger;
 
-public class CyclicProducer {
+public class SourceDataProducer {
     public static void main(String args[]) throws InterruptedException {
 
-        String namespace = args.length == 0 ? "cyclic" : args[0];
+        /// 1. Start the producer; open `MovieData.txt` and `ActorData.txt` files in an editor
 
-        /// 1. Start the producer; observe cycles running on a 10 second cadence
+        SourceDataProducer myProducer = new SourceDataProducer(args.length == 0 ? "sourcedata" : args[0])
+                .initializeDataModel(Movie.class)
+                .restore();
 
-        CyclicProducer myProducer = new CyclicProducer(namespace);
-
-        myProducer.initializeDataModel(Movie.class);
-        myProducer.restore();
-
-        /// 2. Hollow only produces new data states when there are actual changes.
-        ///    Try using the debugger to change a name or a title on the fly
+        /// 2. Edit movie or actor rows in the "database"; save; observe a delta; repeat
 
         myProducer.cycleForever(new Populator(){
             @Override
@@ -65,43 +63,37 @@ public class CyclicProducer {
                 /// DataMonkey(TM) for demonstration purposes only; do NOT taunt DataMonkey
                 //newState = dataMonkey.introduceChaos(newState);
 
-                {
-                    Set<Actor> cast = new HashSet<>();
-                    cast.add(new Actor(263, "Henry Thomas"));
-                    cast.add(new Actor(337, "Drew Barrymore"));
-                    Movie movie = new Movie(37, "E.T. the Extra-Terrestrial", 1982, cast);
+                try(SourceData movieData = new SourceData("MovieData.txt");
+                        SourceData actorData = new SourceData("ActorData.txt")) {
+                    for(SourceData.Row movieRow : movieData) {
+                        Iterator<SourceData.Column> movieColumns = movieRow.iterator();
 
-                    newState.add(movie);
-                }
-                {
-                    Set<Actor> cast = new HashSet<>();
-                    cast.add(new Actor(337, "Drew Barrymore"));
-                    Movie movie = new Movie(193, "Firestarter", 1984, cast);
+                        String title = movieColumns.next().value;
+                        int releaseYear = movieColumns.next().toInt();
+                        Set<Integer> actorIds = movieColumns.next().toIds();
+                        Set<Actor> movieActors = new LinkedHashSet<>();
+                        for(int actorId : actorIds) {
+                            SourceData.Row actorRow = actorData.get(actorId);
+                            Iterator<SourceData.Column> actorColumns = actorRow.iterator();
+                            String actorName = actorColumns.next().value;
+                            Actor actor = new Actor(actorId, actorName);
 
-                    newState.add(movie);
-                }
-                {
-                    Set<Actor> cast = new HashSet<>();
-                    cast.add(new Actor(2777, "Finn Wolfhard"));
-                    cast.add(new Actor(11, "Millie Bobby Brown"));
-                    cast.add(new Actor(953, "Gaten Matarazzo"));
-                    cast.add(new Actor(3137, "Caleb McLaughlin"));
-                    Movie movie = new Movie(1987, "Stranger Things Season 1", 2016, cast);
+                            //if(actor.actorId == 20001751) throw new RuntimeException("boom!");
+                            movieActors.add(actor);
+                        }
+                        Movie movie = new Movie(movieRow.id, title, releaseYear, movieActors);
 
-                    newState.add(movie);
+                        newState.add(movie);
+                    }
                 }
             }
         });
 
-        /*
-         * UP NEXT: `SourceDataProducer` demonstrates producing data states from an external source of truth
-         *
-         * BONUS: create a `MessageDrivenProducer` that runs a cycle in response to receiving a message,
-         *        such as from Kafka
-         */
+        /// BONUS: create a producer that ingests data from your source-of-truth. See if you
+        ///        can avoid having your entire source data loaded in memory at the same time.
     }
 
-    CyclicProducer(String namespace) {
+    public SourceDataProducer(String namespace) {
         final Path productDir = makeProductDir(namespace);
         final Path publishDir = makePublishDir(namespace);
 
@@ -118,20 +110,21 @@ public class CyclicProducer {
                 new FilesystemBlobRetriever(publishDir));
         hollowProducer.addListener(logger);
 
-
         this.hollowProducer = hollowProducer;
         this.announcementRetriever = new FilesystemAnnouncementRetriever(publishDir);
     }
 
-    void initializeDataModel(Class<?>...classes) {
+    public SourceDataProducer initializeDataModel(Class<?>...classes) {
         hollowProducer.initializeDataModel(classes);
+        return this;
     }
 
-    void restore() {
+    public SourceDataProducer restore() {
         hollowProducer.restore(announcementRetriever);
+        return this;
     }
 
-    void cycleForever(HollowProducer.Populator task) {
+    public void cycleForever(HollowProducer.Populator task) {
         long lastCycleTime = Long.MIN_VALUE;
         while(true) {
             waitForMinCycleTime(lastCycleTime);

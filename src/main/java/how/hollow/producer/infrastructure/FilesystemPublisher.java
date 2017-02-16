@@ -17,25 +17,33 @@
  */
 package how.hollow.producer.infrastructure;
 
+import static how.hollow.producer.util.ScratchPaths.makeProductDir;
+import static how.hollow.producer.util.ScratchPaths.makePublishDir;
+
 import static java.nio.file.Files.deleteIfExists;
-import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.Files.*;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import com.netflix.hollow.api.HollowStateTransition;
-import com.netflix.hollow.api.producer.HollowBlob;
-import com.netflix.hollow.api.producer.HollowPublisher;
+import com.netflix.hollow.api.producer.HollowProducer;
 
-public class FilesystemPublisher implements HollowPublisher {
+// TODO: timt: introduce AbstractHollowPublisher into hollow for all filesystem staged publishers to extend (us, S3publisher)
+public class FilesystemPublisher implements HollowProducer.Publisher {
 
     private final Path productDir;
     private final Path publishDir;
+
+    public FilesystemPublisher(String namespace) {
+        this(makeProductDir(namespace), makePublishDir(namespace));
+    }
 
     public FilesystemPublisher(Path productDir, Path publishDir) {
         this.productDir = productDir;
@@ -43,27 +51,27 @@ public class FilesystemPublisher implements HollowPublisher {
     }
 
     @Override
-    public HollowBlob openSnapshot(HollowStateTransition transition) {
+    public HollowProducer.Blob openSnapshot(HollowProducer.Transition transition) {
         Path snapshotPath = productDir.resolve(String.format("snapshot-%d", transition.getToVersion()));
         return new FilesystemBlob(snapshotPath);
     }
 
     @Override
-    public HollowBlob openDelta(HollowStateTransition transition) {
+    public HollowProducer.Blob openDelta(HollowProducer.Transition transition) {
         return openDeltaBlob(transition, "delta");
     }
 
     @Override
-    public HollowBlob openReverseDelta(HollowStateTransition transition) {
+    public HollowProducer.Blob openReverseDelta(HollowProducer.Transition transition) {
         return openDeltaBlob(transition.reverse(), "reversedelta");
     }
 
     @Override
-    public void publish(HollowBlob blob) {
+    public void publish(HollowProducer.Blob blob) {
         publishBlob((FilesystemBlob)blob);
     }
 
-    private HollowBlob openDeltaBlob(HollowStateTransition transition, String fileType) {
+    private HollowProducer.Blob openDeltaBlob(HollowProducer.Transition transition, String fileType) {
         Path deltaPath = productDir.resolve(String.format("%s-%d-%d",
                 fileType,
                 transition.getFromVersion(),
@@ -84,11 +92,13 @@ public class FilesystemPublisher implements HollowPublisher {
         }
     }
 
-    private static final class FilesystemBlob implements HollowBlob {
+    private static final class FilesystemBlob implements HollowProducer.Blob {
 
         private final Path product;
         private BufferedOutputStream out;
+        private BufferedInputStream in;
 
+        // TODO: timt: pull FilesystemBlob into Hollow
         FilesystemBlob(Path product) {
             this.product = product;
         }
@@ -97,8 +107,17 @@ public class FilesystemPublisher implements HollowPublisher {
         public OutputStream getOutputStream() {
             try {
                 out = new BufferedOutputStream(newOutputStream(product));
-                //out = new BufferedOutputStream(newOutputStream(product));
                 return out;
+            } catch(IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            try {
+                in = new BufferedInputStream(newInputStream(product));
+                return in;
             } catch(IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -108,9 +127,12 @@ public class FilesystemPublisher implements HollowPublisher {
         public void close() {
             if(out != null) {
                 try {
-                    out.close();
+                    if(out != null) out.close();
                     out = null;
-                    deleteIfExists(product);
+                    if(in != null) in.close();
+                    in = null;
+                    // FIXME: timt: still want cleanup, but also want to use blob for integrity check
+                    //deleteIfExists(product);
                 } catch(IOException ex) {
                     throw new RuntimeException(ex);
                 }

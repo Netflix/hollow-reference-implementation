@@ -40,12 +40,10 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
-import com.netflix.hollow.api.HollowStateTransition;
-import com.netflix.hollow.api.producer.HollowBlob;
-import com.netflix.hollow.api.producer.HollowPublisher;
+import com.netflix.hollow.api.producer.HollowProducer;
 import com.netflix.hollow.core.memory.encoding.VarInt;
 
-public class S3Publisher implements HollowPublisher {
+public class S3Publisher implements HollowProducer.Publisher {
 
     private final AmazonS3 s3;
     private final TransferManager s3TransferManager;
@@ -65,22 +63,22 @@ public class S3Publisher implements HollowPublisher {
     }
 
     @Override
-    public HollowBlob openSnapshot(HollowStateTransition transition) {
+    public HollowProducer.Blob openSnapshot(HollowProducer.Transition transition) {
         return new S3Blob(SNAPSHOT, blobNamespace, scratchDir, transition);
     }
 
     @Override
-    public HollowBlob openDelta(HollowStateTransition transition) {
+    public HollowProducer.Blob openDelta(HollowProducer.Transition transition) {
         return new S3Blob(DELTA, blobNamespace, scratchDir, transition);
     }
 
     @Override
-    public HollowBlob openReverseDelta(HollowStateTransition transition) {
+    public HollowProducer.Blob openReverseDelta(HollowProducer.Transition transition) {
         return new S3Blob(REVERSE_DELTA, blobNamespace, scratchDir, transition);
     }
 
     @Override
-    public void publish(HollowBlob blob) {
+    public void publish(HollowProducer.Blob blob) {
         uploadBlob((S3Blob)blob);
     }
 
@@ -112,7 +110,7 @@ public class S3Publisher implements HollowPublisher {
      * Write a list of all of the state versions to S3.
      * @param newVersion
      */
-    private synchronized void updateSnapshotIndex(HollowStateTransition transition) {
+    private synchronized void updateSnapshotIndex(HollowProducer.Transition transition) {
         /// insert the new version into the list
         int idx = Collections.binarySearch(snapshotIndex, transition.getToVersion());
         int insertionPoint = Math.abs(idx) - 1;

@@ -35,7 +35,7 @@ import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
 import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
 import how.hollow.producer.util.ScratchPaths;
 
-public class BasicConsumer {
+public class ReferenceConsumer {
 
     public static void main(String args[]) throws Exception {
         Path publishDir = ScratchPaths.makePublishDir(args.length == 0 ? "basic" : args[0]);
@@ -45,7 +45,7 @@ public class BasicConsumer {
         HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
         HollowAnnouncementWatcher announcementWatcher = new FilesystemAnnouncementWatcher(publishDir);
 
-        BasicConsumer consumer = new BasicConsumer(blobRetriever, announcementWatcher);
+        ReferenceConsumer consumer = new ReferenceConsumer(blobRetriever, announcementWatcher);
 
         HollowHistoryUIServer historyUIServer = new HollowHistoryUIServer(consumer.historyListener.getHistory(), 7777);
         historyUIServer.start();
@@ -55,7 +55,7 @@ public class BasicConsumer {
     private final HollowClient client;
     private final ConsumerHistoryListener historyListener;
 
-    public BasicConsumer(HollowBlobRetriever blobRetriever, HollowAnnouncementWatcher announcementWatcher) {
+    public ReferenceConsumer(HollowBlobRetriever blobRetriever, HollowAnnouncementWatcher announcementWatcher) {
         this.historyListener = new ConsumerHistoryListener();
 
         this.client = new HollowClient(

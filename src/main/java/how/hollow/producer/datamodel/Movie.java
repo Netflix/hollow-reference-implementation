@@ -25,14 +25,16 @@ public class Movie {
 
     public int id;
     public String title;
+    public Integer releaseYear;
     @HollowHashKey(fields="actorId")
     public Set<Actor> actors;
     
     public Movie() { }
     
-    public Movie(int id, String title, Set<Actor> actors) {
+    public Movie(int id, String title, Integer releaseYear, Set<Actor> actors) {
         this.id = id;
         this.title = title;
+        this.releaseYear = releaseYear;
         this.actors = actors;
     }
 

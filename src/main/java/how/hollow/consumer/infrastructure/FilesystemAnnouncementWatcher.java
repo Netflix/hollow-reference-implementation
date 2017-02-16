@@ -24,7 +24,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import com.netflix.hollow.api.HollowStateTransition;
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
 
 public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {

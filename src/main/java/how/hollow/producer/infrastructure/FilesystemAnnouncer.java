@@ -17,21 +17,29 @@
  */
 package how.hollow.producer.infrastructure;
 
+import static how.hollow.producer.util.ScratchPaths.makePublishDir;
+
 import static java.nio.file.Files.newBufferedWriter;
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.DSYNC;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import com.netflix.hollow.api.producer.HollowAnnouncer;
+import com.netflix.hollow.api.producer.HollowProducer;
 
-public class FilesystemAnnouncer implements HollowAnnouncer {
+public class FilesystemAnnouncer implements HollowProducer.Announcer {
 
     public static final String ANNOUNCEMENT_FILENAME = "announced.version";
     
     private final Path publishDir;
+
+    public FilesystemAnnouncer(String namespace) {
+        this(makePublishDir(namespace));
+    }
 
     public FilesystemAnnouncer(Path publishDir) {
         this.publishDir = publishDir;

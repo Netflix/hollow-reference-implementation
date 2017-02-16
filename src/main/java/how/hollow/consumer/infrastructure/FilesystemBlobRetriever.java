@@ -17,6 +17,8 @@
  */
 package how.hollow.consumer.infrastructure;
 
+import static how.hollow.producer.util.ScratchPaths.makePublishDir;
+
 import static java.nio.file.Files.newDirectoryStream;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.StandardOpenOption.READ;
@@ -35,6 +37,10 @@ public class FilesystemBlobRetriever implements HollowBlobRetriever {
     
     private final Path publishDir;
     
+    public FilesystemBlobRetriever(String namespace) {
+        this(makePublishDir(namespace));
+    }
+
     public FilesystemBlobRetriever(Path publishDir) {
         this.publishDir = publishDir;
     }
