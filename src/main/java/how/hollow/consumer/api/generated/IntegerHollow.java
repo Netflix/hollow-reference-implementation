@@ -4,30 +4,30 @@ import com.netflix.hollow.api.objects.HollowObject;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
 
 @SuppressWarnings("all")
-public class StringHollow extends HollowObject {
+public class IntegerHollow extends HollowObject {
 
-    public StringHollow(StringDelegate delegate, int ordinal) {
+    public IntegerHollow(IntegerDelegate delegate, int ordinal) {
         super(delegate, ordinal);
     }
 
-    public String _getValue() {
+    public int _getValue() {
         return delegate().getValue(ordinal);
     }
 
-    public boolean _isValueEqual(String testValue) {
-        return delegate().isValueEqual(ordinal, testValue);
+    public Integer _getValueBoxed() {
+        return delegate().getValueBoxed(ordinal);
     }
 
     public MovieAPI api() {
         return typeApi().getAPI();
     }
 
-    public StringTypeAPI typeApi() {
+    public IntegerTypeAPI typeApi() {
         return delegate().getTypeAPI();
     }
 
-    protected StringDelegate delegate() {
-        return (StringDelegate)delegate;
+    protected IntegerDelegate delegate() {
+        return (IntegerDelegate)delegate;
     }
 
 }

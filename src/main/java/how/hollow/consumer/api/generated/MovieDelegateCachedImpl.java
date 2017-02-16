@@ -1,22 +1,24 @@
 package how.hollow.consumer.api.generated;
 
-import com.netflix.hollow.api.custom.HollowTypeAPI;
-import com.netflix.hollow.api.objects.delegate.HollowCachedDelegate;
 import com.netflix.hollow.api.objects.delegate.HollowObjectAbstractDelegate;
 import com.netflix.hollow.core.read.dataaccess.HollowObjectTypeDataAccess;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
+import com.netflix.hollow.api.custom.HollowTypeAPI;
+import com.netflix.hollow.api.objects.delegate.HollowCachedDelegate;
 
 @SuppressWarnings("all")
 public class MovieDelegateCachedImpl extends HollowObjectAbstractDelegate implements HollowCachedDelegate, MovieDelegate {
 
     private final Integer id;
     private final int titleOrdinal;
+    private final int releaseYearOrdinal;
     private final int actorsOrdinal;
    private MovieTypeAPI typeAPI;
 
     public MovieDelegateCachedImpl(MovieTypeAPI typeAPI, int ordinal) {
         this.id = typeAPI.getIdBoxed(ordinal);
         this.titleOrdinal = typeAPI.getTitleOrdinal(ordinal);
+        this.releaseYearOrdinal = typeAPI.getReleaseYearOrdinal(ordinal);
         this.actorsOrdinal = typeAPI.getActorsOrdinal(ordinal);
         this.typeAPI = typeAPI;
     }
@@ -31,6 +33,10 @@ public class MovieDelegateCachedImpl extends HollowObjectAbstractDelegate implem
 
     public int getTitleOrdinal(int ordinal) {
         return titleOrdinal;
+    }
+
+    public int getReleaseYearOrdinal(int ordinal) {
+        return releaseYearOrdinal;
     }
 
     public int getActorsOrdinal(int ordinal) {

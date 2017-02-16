@@ -1,6 +1,7 @@
 package how.hollow.consumer.api.generated;
 
 import com.netflix.hollow.api.objects.HollowObject;
+import com.netflix.hollow.core.schema.HollowObjectSchema;
 
 @SuppressWarnings("all")
 public class MovieHollow extends HollowObject {
@@ -22,6 +23,13 @@ public class MovieHollow extends HollowObject {
         if(refOrdinal == -1)
             return null;
         return  api().getStringHollow(refOrdinal);
+    }
+
+    public IntegerHollow _getReleaseYear() {
+        int refOrdinal = delegate().getReleaseYearOrdinal(ordinal);
+        if(refOrdinal == -1)
+            return null;
+        return  api().getIntegerHollow(refOrdinal);
     }
 
     public SetOfActorHollow _getActors() {

@@ -7,24 +7,22 @@ import com.netflix.hollow.api.custom.HollowTypeAPI;
 import com.netflix.hollow.api.objects.delegate.HollowCachedDelegate;
 
 @SuppressWarnings("all")
-public class StringDelegateCachedImpl extends HollowObjectAbstractDelegate implements HollowCachedDelegate, StringDelegate {
+public class IntegerDelegateCachedImpl extends HollowObjectAbstractDelegate implements HollowCachedDelegate, IntegerDelegate {
 
-    private final String value;
-   private StringTypeAPI typeAPI;
+    private final Integer value;
+   private IntegerTypeAPI typeAPI;
 
-    public StringDelegateCachedImpl(StringTypeAPI typeAPI, int ordinal) {
-        this.value = typeAPI.getValue(ordinal);
+    public IntegerDelegateCachedImpl(IntegerTypeAPI typeAPI, int ordinal) {
+        this.value = typeAPI.getValueBoxed(ordinal);
         this.typeAPI = typeAPI;
     }
 
-    public String getValue(int ordinal) {
-        return value;
+    public int getValue(int ordinal) {
+        return value.intValue();
     }
 
-    public boolean isValueEqual(int ordinal, String testValue) {
-        if(testValue == null)
-            return value == null;
-        return testValue.equals(value);
+    public Integer getValueBoxed(int ordinal) {
+        return value;
     }
 
     @Override
@@ -37,12 +35,12 @@ public class StringDelegateCachedImpl extends HollowObjectAbstractDelegate imple
         return typeAPI.getTypeDataAccess();
     }
 
-    public StringTypeAPI getTypeAPI() {
+    public IntegerTypeAPI getTypeAPI() {
         return typeAPI;
     }
 
     public void updateTypeAPI(HollowTypeAPI typeAPI) {
-        this.typeAPI = (StringTypeAPI) typeAPI;
+        this.typeAPI = (IntegerTypeAPI) typeAPI;
     }
 
 }
