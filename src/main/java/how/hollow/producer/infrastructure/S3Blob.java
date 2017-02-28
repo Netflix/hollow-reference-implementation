@@ -1,16 +1,18 @@
 package how.hollow.producer.infrastructure;
 
 import static how.hollow.producer.infrastructure.S3Blob.Kind.SNAPSHOT;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.deleteIfExists;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.Files.size;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.netflix.hollow.api.producer.HollowProducer;
@@ -20,25 +22,26 @@ public final class S3Blob implements HollowProducer.Blob {
 
     private final S3Blob.Kind kind;
     private final String namespace;
-    final HollowProducer.Transition transition;
-    final File product;
+    final long fromVersion;
+    final long toVersion;
+    final Path product;
     private OutputStream out;
     private BufferedInputStream in;
 
-    S3Blob(S3Blob.Kind kind, String namespace, File parent, HollowProducer.Transition transition) {
+    S3Blob(S3Blob.Kind kind, String namespace, Path parent, long fromVersion, long toVersion) {
         this.kind = kind;
         this.namespace = namespace;
-        this.transition = transition;
-        this.product = kind.getScratchFile(parent, namespace, transition);
+        this.fromVersion = fromVersion;
+        this.toVersion = toVersion;
+        this.product = kind.getProductPath(parent, namespace, fromVersion, toVersion);
     }
 
     @Override
     public OutputStream getOutputStream() {
         try {
-            File parent = product.getParentFile();
-            if(!parent.exists()) parent.mkdirs();
-            out = new BufferedOutputStream(new FileOutputStream(product));
-        } catch(FileNotFoundException ex) {
+            createDirectories(product.getParent());
+            out = new BufferedOutputStream(newOutputStream(product));
+        } catch(IOException ex) {
             throw new RuntimeException(ex);
         }
         return out;
@@ -47,7 +50,7 @@ public final class S3Blob implements HollowProducer.Blob {
     @Override
     public InputStream getInputStream() {
         try {
-            in = new BufferedInputStream(new FileInputStream(product));
+            in = new BufferedInputStream(newInputStream(product));
         } catch(IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -67,7 +70,11 @@ public final class S3Blob implements HollowProducer.Blob {
         }
         // FIXME: timt: we products lingering a bit longer so that we can round-trip them into read states
         //    without having to fetch the blobs we just published
-        product.delete();
+        try {
+            deleteIfExists(product);
+        } catch(IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     boolean isSnapshot() {
@@ -75,14 +82,18 @@ public final class S3Blob implements HollowProducer.Blob {
     }
 
     String getS3ObjectName() {
-        return kind.getS3ObjectName(namespace, transition);
+        return kind.getS3ObjectName(namespace, toVersion);
     }
 
     ObjectMetadata getS3ObjectMetadata() {
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setHeader("Content-Length", product.length());
-        kind.populateObjectMetadata(transition, metadata);
-        return metadata;
+        try {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setHeader("Content-Length", size(product));
+            kind.populateObjectMetadata(fromVersion, toVersion, metadata);
+            return metadata;
+        } catch(IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public static enum Kind {
@@ -97,45 +108,38 @@ public final class S3Blob implements HollowProducer.Blob {
             this.prefix = prefix;
         }
 
-        public void populateObjectMetadata(HollowProducer.Transition transition, ObjectMetadata metadata) {
+        public void populateObjectMetadata(long fromVersion, long toVersion, ObjectMetadata metadata) {
             switch(this) {
             case SNAPSHOT:
-                metadata.addUserMetadata("to_state", String.valueOf(transition.getToVersion()));
+                metadata.addUserMetadata("to_state", String.valueOf(toVersion));
                 break;
             case DELTA:
-                populateDeltaMetadata(transition, metadata);
+                populateDeltaMetadata(fromVersion, toVersion, metadata);
                 break;
             case REVERSE_DELTA:
-                populateDeltaMetadata(transition.reverse(), metadata);
+                populateDeltaMetadata(toVersion, fromVersion, metadata);
                 break;
             default:
                 throw new IllegalStateException("unknown kind, kind=" + this);
             }
         }
 
-        private void populateDeltaMetadata(HollowProducer.Transition transition, ObjectMetadata metadata) {
-            metadata.addUserMetadata("from_state", String.valueOf(transition.getFromVersion()));
-            metadata.addUserMetadata("to_state", String.valueOf(transition.getToVersion()));
+        private void populateDeltaMetadata(long origin, long destination, ObjectMetadata metadata) {
+            metadata.addUserMetadata("from_state", String.valueOf(origin));
+            metadata.addUserMetadata("to_state", String.valueOf(destination));
         }
 
-        private File getScratchFile(File parent, String namespace, HollowProducer.Transition transition) {
-            String pattern;
+        private Path getProductPath(Path parent, String namespace, long fromVersion, long toVersion) {
             switch(this) {
             case SNAPSHOT:
-                pattern = "%s-%s-%d";
-                break;
+                return parent.resolve(String.format("%s-%s-%d", namespace, prefix, toVersion));
             case DELTA:
-                pattern = "%s-%s-%d-%d";
-                break;
+                return parent.resolve(String.format("%s-%s-%d-%d", namespace, prefix, fromVersion, toVersion));
             case REVERSE_DELTA:
-                pattern = "%s-%s-%d-%d";
-                transition = transition.reverse();
-                break;
+                return parent.resolve(String.format("%s-%s-%d-%d", namespace, prefix, toVersion, fromVersion));
             default:
                 throw new IllegalStateException("unknown kind, kind=" + this);
             }
-            String filename = String.format(pattern, namespace, prefix, transition.getFromVersion(), transition.getToVersion());
-            return new File(parent, filename);
         }
 
         public String getS3ObjectPrefix(String blobNamespace) {
@@ -146,10 +150,6 @@ public final class S3Blob implements HollowProducer.Blob {
                     .toString();
         }
 
-        public String getS3ObjectName(String blobNamespace, HollowProducer.Transition transition) {
-            return getS3ObjectName(blobNamespace, transition.getToVersion());
-        }
-
         public String getS3ObjectName(String blobNamespace, long lookupVersion) {
             return new StringBuilder(getS3ObjectPrefix(blobNamespace))
                     .append(Integer.toHexString(HashCodes.hashLong(lookupVersion)))
@@ -157,7 +157,6 @@ public final class S3Blob implements HollowProducer.Blob {
                     .append(lookupVersion)
                     .toString();
         }
-
     }
 
 }

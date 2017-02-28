@@ -20,14 +20,14 @@ package how.hollow.producer.infrastructure;
 import static how.hollow.producer.infrastructure.S3Blob.Kind.DELTA;
 import static how.hollow.producer.infrastructure.S3Blob.Kind.REVERSE_DELTA;
 import static how.hollow.producer.infrastructure.S3Blob.Kind.SNAPSHOT;
+import static java.nio.file.Files.newInputStream;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,30 +51,30 @@ public class S3Publisher implements HollowProducer.Publisher {
     private final String blobNamespace;
 
     private final List<Long> snapshotIndex;
-    private File scratchDir;
+    private Path productPath;
 
-    public S3Publisher(AWSCredentials credentials, String bucketName, String blobNamespace, File scratchDir) {
+    public S3Publisher(AWSCredentials credentials, String bucketName, String blobNamespace, Path productPath) {
         this.bucketName = bucketName;
         this.blobNamespace = blobNamespace;
-        this.scratchDir = scratchDir;
+        this.productPath = productPath;
         this.s3 = new AmazonS3Client(credentials);
         this.s3TransferManager = new TransferManager(s3);
         this.snapshotIndex = initializeSnapshotIndex();
     }
 
     @Override
-    public HollowProducer.Blob openSnapshot(HollowProducer.Transition transition) {
-        return new S3Blob(SNAPSHOT, blobNamespace, scratchDir, transition);
+    public HollowProducer.Blob openSnapshot(long version) {
+        return new S3Blob(SNAPSHOT, blobNamespace, productPath, Long.MIN_VALUE, version);
     }
 
     @Override
-    public HollowProducer.Blob openDelta(HollowProducer.Transition transition) {
-        return new S3Blob(DELTA, blobNamespace, scratchDir, transition);
+    public HollowProducer.Blob openDelta(long fromVersion, long toVersion) {
+        return new S3Blob(DELTA, blobNamespace, productPath, fromVersion, toVersion);
     }
 
     @Override
-    public HollowProducer.Blob openReverseDelta(HollowProducer.Transition transition) {
-        return new S3Blob(REVERSE_DELTA, blobNamespace, scratchDir, transition);
+    public HollowProducer.Blob openReverseDelta(long fromVersion, long toVersion) {
+        return new S3Blob(REVERSE_DELTA, blobNamespace, productPath, fromVersion, toVersion);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class S3Publisher implements HollowProducer.Publisher {
 
     private void uploadBlob(S3Blob s3Blob) {
         /// upload blob to S3
-        try (InputStream is = new BufferedInputStream(new FileInputStream(s3Blob.product))) {
+        try (InputStream is = new BufferedInputStream(newInputStream(s3Blob.product))) {
             Upload upload = s3TransferManager.upload(bucketName, s3Blob.getS3ObjectName(), is, s3Blob.getS3ObjectMetadata());
             upload.waitForCompletion();
         } catch (Exception e) {
@@ -92,7 +92,7 @@ public class S3Publisher implements HollowProducer.Publisher {
         }
 
         /// now we update the snapshot index
-        if(s3Blob.isSnapshot()) updateSnapshotIndex(s3Blob.transition);
+        if(s3Blob.isSnapshot()) updateSnapshotIndex(s3Blob);
     }
 
     /////////////////////// BEGIN SNAPSHOT INDEX CODE ///////////////////////
@@ -110,11 +110,11 @@ public class S3Publisher implements HollowProducer.Publisher {
      * Write a list of all of the state versions to S3.
      * @param newVersion
      */
-    private synchronized void updateSnapshotIndex(HollowProducer.Transition transition) {
+    private synchronized void updateSnapshotIndex(S3Blob blob) {
         /// insert the new version into the list
-        int idx = Collections.binarySearch(snapshotIndex, transition.getToVersion());
+        int idx = Collections.binarySearch(snapshotIndex, blob.toVersion);
         int insertionPoint = Math.abs(idx) - 1;
-        snapshotIndex.add(insertionPoint, transition.getToVersion());
+        snapshotIndex.add(insertionPoint, blob.toVersion);
 
         /// build a binary representation of the list -- gap encoded variable-length integers
         byte[] idxBytes = buidGapEncodedVarIntSnapshotIndex();

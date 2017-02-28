@@ -19,9 +19,9 @@ package how.hollow.producer.infrastructure;
 
 import static how.hollow.producer.util.ScratchPaths.makeProductDir;
 import static how.hollow.producer.util.ScratchPaths.makePublishDir;
-
 import static java.nio.file.Files.deleteIfExists;
-import static java.nio.file.Files.*;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -51,19 +51,19 @@ public class FilesystemPublisher implements HollowProducer.Publisher {
     }
 
     @Override
-    public HollowProducer.Blob openSnapshot(HollowProducer.Transition transition) {
-        Path snapshotPath = productDir.resolve(String.format("snapshot-%d", transition.getToVersion()));
+    public HollowProducer.Blob openSnapshot(long version) {
+        Path snapshotPath = productDir.resolve(String.format("snapshot-%d", version));
         return new FilesystemBlob(snapshotPath);
     }
 
     @Override
-    public HollowProducer.Blob openDelta(HollowProducer.Transition transition) {
-        return openDeltaBlob(transition, "delta");
+    public HollowProducer.Blob openDelta(long fromVersion, long toVersion) {
+        return openDeltaBlob(fromVersion, toVersion, "delta");
     }
 
     @Override
-    public HollowProducer.Blob openReverseDelta(HollowProducer.Transition transition) {
-        return openDeltaBlob(transition.reverse(), "reversedelta");
+    public HollowProducer.Blob openReverseDelta(long fromVersion, long toVersion) {
+        return openDeltaBlob(toVersion, fromVersion, "reversedelta");
     }
 
     @Override
@@ -71,11 +71,11 @@ public class FilesystemPublisher implements HollowProducer.Publisher {
         publishBlob((FilesystemBlob)blob);
     }
 
-    private HollowProducer.Blob openDeltaBlob(HollowProducer.Transition transition, String fileType) {
+    private HollowProducer.Blob openDeltaBlob(long origin, long destination, String fileType) {
         Path deltaPath = productDir.resolve(String.format("%s-%d-%d",
                 fileType,
-                transition.getFromVersion(),
-                transition.getToVersion()));
+                origin,
+                destination));
         return new FilesystemBlob(deltaPath);
     }
 
