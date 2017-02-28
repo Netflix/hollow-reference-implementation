@@ -131,8 +131,9 @@ public class FilesystemPublisher implements HollowProducer.Publisher {
                     out = null;
                     if(in != null) in.close();
                     in = null;
-                    // FIXME: timt: still want cleanup, but also want to use blob for integrity check
-                    //deleteIfExists(product);
+                    // FIXME: timt: need cleanup to occur after integrity check roundtrip
+                    boolean cleanup = false;
+                    if(cleanup) deleteIfExists(product);
                 } catch(IOException ex) {
                     throw new RuntimeException(ex);
                 }

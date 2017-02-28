@@ -26,14 +26,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.netflix.hollow.api.consumer.HollowConsumer;
 import com.netflix.hollow.api.producer.HollowProducer;
 import com.netflix.hollow.api.producer.HollowProducer.Populator;
 import com.netflix.hollow.api.producer.HollowProducer.WriteState;
 import com.netflix.hollow.api.producer.HollowProducerListener;
 
-import how.hollow.consumer.infrastructure.FilesystemAnnouncementRetriever;
-import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
+import how.hollow.consumer.infrastructure.FilesystemStateRetriever;
 import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
 import how.hollow.producer.infrastructure.FilesystemAnnouncer;
@@ -112,13 +110,12 @@ public class CyclicProducer {
 
         HollowProducer hollowProducer = new HollowProducer(
                 new FilesystemPublisher(productDir, publishDir),
-                new FilesystemAnnouncer(publishDir),
-                new FilesystemBlobRetriever(publishDir));
+                new FilesystemAnnouncer(publishDir));
         hollowProducer.addListener(logger);
 
 
         this.hollowProducer = hollowProducer;
-        this.announcementRetriever = new FilesystemAnnouncementRetriever(publishDir);
+        this.stateRetriever = new FilesystemStateRetriever(namespace);
     }
 
     public CyclicProducer initializeDataModel(Class<?>...classes) {
@@ -127,7 +124,7 @@ public class CyclicProducer {
     }
 
     public CyclicProducer restore() {
-        hollowProducer.restore(announcementRetriever);
+        hollowProducer.restore(stateRetriever);
         return this;
     }
 
@@ -145,7 +142,7 @@ public class CyclicProducer {
     private static final long MIN_TIME_BETWEEN_CYCLES = SECONDS.toMillis(10);
 
     private final HollowProducer hollowProducer;
-    private final HollowConsumer.AnnouncementRetriever announcementRetriever;
+    private final FilesystemStateRetriever stateRetriever;
 
     private void waitForMinCycleTime(long lastCycleTime) {
         long targetNextCycleTime = lastCycleTime + MIN_TIME_BETWEEN_CYCLES;
