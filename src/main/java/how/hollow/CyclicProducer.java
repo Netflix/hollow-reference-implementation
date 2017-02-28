@@ -44,17 +44,15 @@ import how.hollow.producer.util.StandardStreamsLogger;
 public class CyclicProducer {
     public static void main(String args[]) throws InterruptedException {
 
-        String namespace = args.length == 0 ? "cyclic" : args[0];
-
         /// 1. Start the producer; observe cycles running on a 10 second cadence
 
-        CyclicProducer myProducer = new CyclicProducer(namespace);
+        CyclicProducer myProducer = new CyclicProducer(args.length == 0 ? "cyclic" : args[0])
+                .initializeDataModel(Movie.class)
+                .restore();
 
-        myProducer.initializeDataModel(Movie.class);
-        myProducer.restore();
-
-        /// 2. Hollow only produces new data states when there are actual changes.
-        ///    Try using the debugger to change a name or a title on the fly
+        /// 2. Hollow produces new data states only if there are actual changes.
+        ///    Use the debugger to change a source data name or a title on the fly;
+        ///    hollow will produce a delta when you resume.
 
         myProducer.cycleForever(new Populator(){
             @Override
@@ -101,7 +99,7 @@ public class CyclicProducer {
          */
     }
 
-    CyclicProducer(String namespace) {
+    public CyclicProducer(String namespace) {
         final Path productDir = makeProductDir(namespace);
         final Path publishDir = makePublishDir(namespace);
 
@@ -123,15 +121,17 @@ public class CyclicProducer {
         this.announcementRetriever = new FilesystemAnnouncementRetriever(publishDir);
     }
 
-    void initializeDataModel(Class<?>...classes) {
+    public CyclicProducer initializeDataModel(Class<?>...classes) {
         hollowProducer.initializeDataModel(classes);
+        return this;
     }
 
-    void restore() {
+    public CyclicProducer restore() {
         hollowProducer.restore(announcementRetriever);
+        return this;
     }
 
-    void cycleForever(HollowProducer.Populator task) {
+    public void cycleForever(HollowProducer.Populator task) {
         long lastCycleTime = Long.MIN_VALUE;
         while(true) {
             waitForMinCycleTime(lastCycleTime);
