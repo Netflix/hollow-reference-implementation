@@ -17,8 +17,7 @@
  */
 package how.hollow.consumer.infrastructure;
 
-import static how.hollow.producer.infrastructure.S3Blob.Kind.DELTA;
-import static how.hollow.producer.infrastructure.S3Blob.Kind.SNAPSHOT;
+import static com.netflix.hollow.api.producer.HollowProducer.Blob.Type.*;
 
 import java.io.BufferedInputStream;
 import java.io.File;

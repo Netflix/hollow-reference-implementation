@@ -20,6 +20,7 @@ package how.hollow;
 import static java.lang.System.out;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
 import com.netflix.hollow.api.client.HollowBlobRetriever;
@@ -33,16 +34,16 @@ import how.hollow.consumer.api.generated.MovieAPIFactory;
 import how.hollow.consumer.history.ConsumerHistoryListener;
 import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
 import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
-import how.hollow.producer.util.ScratchPaths;
 
 public class ReferenceConsumer {
 
     public static void main(String args[]) throws Exception {
-        Path publishDir = ScratchPaths.makePublishDir(args.length == 0 ? "basic" : args[0]);
+        String namespace = args.length == 0 ? "basic" : args[0];
+        Path publishDir = Paths.get(System.getProperty("java.io.tmpdir"), namespace, "published");
 
         out.println("I AM THE CONSUMER.  I WILL READ FROM " + publishDir);
 
-        HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
+        HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(namespace, publishDir);
         HollowAnnouncementWatcher announcementWatcher = new FilesystemAnnouncementWatcher(publishDir);
 
         ReferenceConsumer consumer = new ReferenceConsumer(blobRetriever, announcementWatcher);

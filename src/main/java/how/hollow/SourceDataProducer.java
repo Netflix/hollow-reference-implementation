@@ -17,11 +17,8 @@
  */
 package how.hollow;
 
-import static how.hollow.producer.util.ScratchPaths.makeProductDir;
-import static how.hollow.producer.util.ScratchPaths.makePublishDir;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -30,14 +27,14 @@ import java.util.concurrent.TimeUnit;
 import com.netflix.hollow.api.producer.HollowProducer;
 import com.netflix.hollow.api.producer.HollowProducer.Populator;
 import com.netflix.hollow.api.producer.HollowProducer.WriteState;
+import com.netflix.hollow.api.producer.fs.HollowFilesystemAnnouncer;
+import com.netflix.hollow.api.producer.fs.HollowFilesystemPublisher;
 import com.netflix.hollow.api.producer.HollowProducerListener;
 
 import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
 import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
 import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
-import how.hollow.producer.infrastructure.FilesystemAnnouncer;
-import how.hollow.producer.infrastructure.FilesystemPublisher;
 import how.hollow.producer.sourcedata.SourceData;
 import how.hollow.producer.util.DataMonkey;
 import how.hollow.producer.util.StandardStreamsLogger;
@@ -93,22 +90,20 @@ public class SourceDataProducer {
     }
 
     public SourceDataProducer(String namespace) {
-        final Path productDir = makeProductDir(namespace);
-        this.publishDir = makePublishDir(namespace);
-
-        HollowProducer hollowProducer = new HollowProducer(
-                new FilesystemPublisher(productDir, publishDir),
-                new FilesystemAnnouncer(publishDir));
+        final HollowFilesystemPublisher publisher = new HollowFilesystemPublisher(namespace);
 
         HollowProducerListener logger = new StandardStreamsLogger(){
             @Override public void onProducerInit(long elapsed, TimeUnit unit) {
-                info("I AM THE PRODUCER\n  PRODUCING IN  %s\n  PUBLISHING TO %s\n", productDir, publishDir);
+                info("I AM THE PRODUCER\n  STAGING IN  %s\n  PUBLISHING TO %s\n", publisher.getStagingDir(), publisher.getPublishDir());
                 super.onProducerInit(elapsed, unit);
             }
         };
+
+        this.hollowProducer = new HollowProducer(publisher, new HollowFilesystemAnnouncer(namespace));
         hollowProducer.addListener(logger);
 
-        this.hollowProducer = hollowProducer;
+        announcements = new FilesystemAnnouncementWatcher(namespace);
+        blobRetriever = new FilesystemBlobRetriever(namespace);
     }
 
     public SourceDataProducer initializeDataModel(Class<?>...classes) {
@@ -117,8 +112,6 @@ public class SourceDataProducer {
     }
 
     public SourceDataProducer restore() {
-        FilesystemAnnouncementWatcher announcements = new FilesystemAnnouncementWatcher(publishDir);
-        FilesystemBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
         hollowProducer.restore(announcements.readLatestVersion(), blobRetriever);
         return this;
     }
@@ -137,7 +130,8 @@ public class SourceDataProducer {
     private static final long MIN_TIME_BETWEEN_CYCLES = SECONDS.toMillis(10);
 
     private final HollowProducer hollowProducer;
-    private final Path publishDir;
+    private final FilesystemAnnouncementWatcher announcements;
+    private final FilesystemBlobRetriever blobRetriever;
 
     private void waitForMinCycleTime(long lastCycleTime) {
         long targetNextCycleTime = lastCycleTime + MIN_TIME_BETWEEN_CYCLES;

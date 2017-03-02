@@ -17,10 +17,9 @@
  */
 package how.hollow.producer.infrastructure;
 
-import static how.hollow.producer.infrastructure.S3Blob.Kind.DELTA;
-import static how.hollow.producer.infrastructure.S3Blob.Kind.REVERSE_DELTA;
-import static how.hollow.producer.infrastructure.S3Blob.Kind.SNAPSHOT;
+import static com.netflix.hollow.api.producer.HollowProducer.Blob.Type.*;
 import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.size;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -40,59 +39,98 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.netflix.hollow.api.producer.HollowProducer.Blob.Type;
+import com.netflix.hollow.api.producer.fs.AbstractHollowPublisher;
 import com.netflix.hollow.api.producer.HollowProducer;
+import com.netflix.hollow.api.producer.HollowProducer.Blob;
+import com.netflix.hollow.core.memory.encoding.HashCodes;
 import com.netflix.hollow.core.memory.encoding.VarInt;
 
-public class S3Publisher implements HollowProducer.Publisher {
-
+public class S3Publisher extends AbstractHollowPublisher {
     private final AmazonS3 s3;
     private final TransferManager s3TransferManager;
     private final String bucketName;
-    private final String blobNamespace;
 
     private final List<Long> snapshotIndex;
-    private Path productPath;
 
-    public S3Publisher(AWSCredentials credentials, String bucketName, String blobNamespace, Path productPath) {
+    public S3Publisher(AWSCredentials credentials, String bucketName, String namespace, Path stagingPath) {
+        super(namespace, stagingPath);
         this.bucketName = bucketName;
-        this.blobNamespace = blobNamespace;
-        this.productPath = productPath;
         this.s3 = new AmazonS3Client(credentials);
         this.s3TransferManager = new TransferManager(s3);
         this.snapshotIndex = initializeSnapshotIndex();
     }
 
     @Override
-    public HollowProducer.Blob openSnapshot(long version) {
-        return new S3Blob(SNAPSHOT, blobNamespace, productPath, Long.MIN_VALUE, version);
+    public void publish(Blob blob) {
+        uploadBlob((StagedBlob)blob);
     }
 
-    @Override
-    public HollowProducer.Blob openDelta(long fromVersion, long toVersion) {
-        return new S3Blob(DELTA, blobNamespace, productPath, fromVersion, toVersion);
-    }
-
-    @Override
-    public HollowProducer.Blob openReverseDelta(long fromVersion, long toVersion) {
-        return new S3Blob(REVERSE_DELTA, blobNamespace, productPath, fromVersion, toVersion);
-    }
-
-    @Override
-    public void publish(HollowProducer.Blob blob) {
-        uploadBlob((S3Blob)blob);
-    }
-
-    private void uploadBlob(S3Blob s3Blob) {
+    private void uploadBlob(StagedBlob blob) {
         /// upload blob to S3
-        try (InputStream is = new BufferedInputStream(newInputStream(s3Blob.product))) {
-            Upload upload = s3TransferManager.upload(bucketName, s3Blob.getS3ObjectName(), is, s3Blob.getS3ObjectMetadata());
+        try (InputStream is = new BufferedInputStream(newInputStream(blob.getStagedArtifactPath()))) {
+            Upload upload = s3TransferManager.upload(bucketName,
+                    getS3ObjectName(blob),
+                    is,
+                    getS3ObjectMetadata(blob));
             upload.waitForCompletion();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         /// now we update the snapshot index
-        if(s3Blob.isSnapshot()) updateSnapshotIndex(s3Blob);
+        if(blob.getType() == SNAPSHOT) updateSnapshotIndex(blob);
+    }
+
+
+    ObjectMetadata getS3ObjectMetadata(StagedBlob blob) {
+        try {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setHeader("Content-Length", size(blob.getStagedArtifactPath()));
+            populateObjectMetadata(blob, metadata);
+            return metadata;
+        } catch(IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void populateObjectMetadata(StagedBlob blob, ObjectMetadata metadata) {
+        switch(blob.getType()) {
+        case SNAPSHOT:
+            metadata.addUserMetadata("to_state", String.valueOf(blob.getToVersion()));
+            break;
+        case DELTA:
+        case REVERSE_DELTA:
+            populateDeltaMetadata(blob, metadata);
+            break;
+        default:
+            throw new IllegalStateException("unknown blob type, type=" + blob.getType());
+        }
+    }
+
+    private void populateDeltaMetadata(StagedBlob blob, ObjectMetadata metadata) {
+        metadata.addUserMetadata("from_state", String.valueOf(blob.getFromVersion()));
+        metadata.addUserMetadata("to_state", String.valueOf(blob.getToVersion()));
+    }
+
+    public String getS3ObjectPrefix(Blob.Type type) {
+        return new StringBuilder(namespace)
+                .append("/")
+                .append(type.prefix)
+                .append("/")
+                .toString();
+    }
+
+    public String getS3ObjectName(Blob.Type type, long lookupVersion) {
+        return new StringBuilder(getS3ObjectPrefix(type))
+                .append(Integer.toHexString(HashCodes.hashLong(lookupVersion)))
+                .append('-')
+                .append(lookupVersion)
+                .toString();
+    }
+
+    public String getS3ObjectName(StagedBlob blob) {
+        return getS3ObjectName(blob.getType(), blob.getType() == SNAPSHOT ? blob.getToVersion() : blob.getFromVersion());
     }
 
     /////////////////////// BEGIN SNAPSHOT INDEX CODE ///////////////////////
@@ -102,19 +140,19 @@ public class S3Publisher implements HollowProducer.Publisher {
      * The remainder of this class deals with maintaining that index.
      */
 
-    public static String getSnapshotIndexObjectName(String blobNamespace) {
-        return blobNamespace + "/snapshot.index";
+    public static String getSnapshotIndexObjectName(String namespace) {
+        return namespace + "/snapshot.index";
     }
 
     /**
      * Write a list of all of the state versions to S3.
      * @param newVersion
      */
-    private synchronized void updateSnapshotIndex(S3Blob blob) {
+    private synchronized void updateSnapshotIndex(Blob blob) {
         /// insert the new version into the list
-        int idx = Collections.binarySearch(snapshotIndex, blob.toVersion);
+        int idx = Collections.binarySearch(snapshotIndex, blob.getToVersion());
         int insertionPoint = Math.abs(idx) - 1;
-        snapshotIndex.add(insertionPoint, blob.toVersion);
+        snapshotIndex.add(insertionPoint, blob.getToVersion());
 
         /// build a binary representation of the list -- gap encoded variable-length integers
         byte[] idxBytes = buidGapEncodedVarIntSnapshotIndex();
@@ -125,7 +163,7 @@ public class S3Publisher implements HollowProducer.Publisher {
 
         /// upload the new file content.
         try(InputStream is = new ByteArrayInputStream(idxBytes)) {
-            Upload upload = s3TransferManager.upload(bucketName, getSnapshotIndexObjectName(blobNamespace), is, metadata);
+            Upload upload = s3TransferManager.upload(bucketName, getSnapshotIndexObjectName(namespace), is, metadata);
 
             upload.waitForCompletion();
         } catch(Exception e) {
@@ -168,7 +206,7 @@ public class S3Publisher implements HollowProducer.Publisher {
     private List<Long> initializeSnapshotIndex() {
         List<Long> snapshotIdx = new ArrayList<Long>();
 
-        ObjectListing listObjects = s3.listObjects(bucketName, SNAPSHOT.getS3ObjectPrefix(blobNamespace));
+        ObjectListing listObjects = s3.listObjects(bucketName, getS3ObjectPrefix(SNAPSHOT));
 
         for (S3ObjectSummary summary : listObjects.getObjectSummaries())
             addSnapshotStateId(summary, snapshotIdx);

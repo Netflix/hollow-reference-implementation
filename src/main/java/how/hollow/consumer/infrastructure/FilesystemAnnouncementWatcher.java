@@ -17,23 +17,29 @@
  */
 package how.hollow.consumer.infrastructure;
 
-import static how.hollow.producer.infrastructure.FilesystemAnnouncer.ANNOUNCEMENT_FILENAME;
 import static java.nio.file.Files.newBufferedReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
 
 public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
-
-    private final Path publishDir;
-
+    private final Path announcementPath;
     private long latestVersion;
 
+    public FilesystemAnnouncementWatcher(String namespace) {
+        this(Paths.get(System.getProperty("java.io.tmpdir"), namespace, "published"));
+    }
+
     public FilesystemAnnouncementWatcher(Path publishDir) {
-        this.publishDir = publishDir;
+        this(publishDir, "announced.version");
+    }
+
+    public FilesystemAnnouncementWatcher(Path publishDir, String announcementFilename) {
+        announcementPath = publishDir.resolve(announcementFilename);
         this.latestVersion = readLatestVersion();
     }
 
@@ -67,12 +73,10 @@ public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
     }
 
     public long readLatestVersion() {
-        Path announcementPath = publishDir.resolve(ANNOUNCEMENT_FILENAME);
         try(BufferedReader reader = newBufferedReader(announcementPath)) {
             return Long.parseLong(reader.readLine());
         } catch(IOException e) {
-            throw new RuntimeException(e);
+            return Long.MIN_VALUE;
         }
     }
-
 }

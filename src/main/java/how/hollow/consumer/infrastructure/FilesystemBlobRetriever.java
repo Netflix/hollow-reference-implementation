@@ -17,8 +17,6 @@
  */
 package how.hollow.consumer.infrastructure;
 
-import static how.hollow.producer.util.ScratchPaths.makePublishDir;
-
 import static java.nio.file.Files.newDirectoryStream;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.StandardOpenOption.READ;
@@ -29,29 +27,31 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.netflix.hollow.api.client.HollowBlob;
 import com.netflix.hollow.api.client.HollowBlobRetriever;
 
 public class FilesystemBlobRetriever implements HollowBlobRetriever {
-    
+    private final String namespace;
     private final Path publishDir;
-    
+
     public FilesystemBlobRetriever(String namespace) {
-        this(makePublishDir(namespace));
+        this(namespace, Paths.get(System.getProperty("java.io.tmpdir"), namespace, "published"));
     }
 
-    public FilesystemBlobRetriever(Path publishDir) {
+    public FilesystemBlobRetriever(String namespace, Path publishDir) {
+        this.namespace = namespace;
         this.publishDir = publishDir;
     }
 
     @Override
     public HollowBlob retrieveSnapshotBlob(long desiredVersion) {
-        Path exactPath = publishDir.resolve("snapshot-" + desiredVersion);
-        
+        Path exactPath = publishDir.resolve(String.format("%s-snapshot-%d", namespace, desiredVersion));
+
         if(Files.exists(exactPath))
             return new FilesystemBlob(exactPath, desiredVersion);
-        
+
         long maxVersionBeforeDesired = Long.MIN_VALUE;
         Path maxVersionBeforeDesiredPath = null;
 
@@ -69,7 +69,7 @@ public class FilesystemBlobRetriever implements HollowBlobRetriever {
 
         if(maxVersionBeforeDesired > Long.MIN_VALUE)
             return new FilesystemBlob(maxVersionBeforeDesiredPath, maxVersionBeforeDesired);
-        
+
         return null;
     }
 
@@ -126,5 +126,4 @@ public class FilesystemBlobRetriever implements HollowBlobRetriever {
             return new BufferedInputStream(newInputStream(blobPath, READ));
         }
     }
-
 }

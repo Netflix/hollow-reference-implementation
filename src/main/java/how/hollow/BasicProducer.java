@@ -20,33 +20,33 @@ package how.hollow;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.netflix.hollow.api.client.HollowBlobRetriever;
 import com.netflix.hollow.api.producer.HollowProducer;
 import com.netflix.hollow.api.producer.HollowProducer.Populator;
 import com.netflix.hollow.api.producer.HollowProducer.WriteState;
+import com.netflix.hollow.api.producer.fs.HollowFilesystemAnnouncer;
+import com.netflix.hollow.api.producer.fs.HollowFilesystemPublisher;
 
 import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
 import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
 import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
-import how.hollow.producer.infrastructure.FilesystemAnnouncer;
-import how.hollow.producer.infrastructure.FilesystemPublisher;
 
 public class BasicProducer {
     public static void main(String args[]) throws InterruptedException {
 
         String namespace = args.length == 0 ? "basic" : args[0];
 
-        FilesystemPublisher publisher = new FilesystemPublisher(namespace);
         HollowProducer hollowProducer = new HollowProducer(
-                publisher,
-                new FilesystemAnnouncer(namespace));
+                new HollowFilesystemPublisher(namespace),
+                new HollowFilesystemAnnouncer(namespace));
 
         /// 1. Initialize your data model
         hollowProducer.initializeDataModel(Movie.class);
 
         /// 2. Restore from the previous announced state to resume the delta chain
-        FilesystemAnnouncementWatcher announcements = new FilesystemAnnouncementWatcher(publisher.getPublishDir());
-        FilesystemBlobRetriever blobRetriever = new FilesystemBlobRetriever(publisher.getPublishDir());
+        FilesystemAnnouncementWatcher announcements = new FilesystemAnnouncementWatcher(namespace);
+        HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(namespace);
         hollowProducer.restore(announcements.readLatestVersion(), blobRetriever);
 
         /// 3. Run one cycle, populating the new state with your source data
