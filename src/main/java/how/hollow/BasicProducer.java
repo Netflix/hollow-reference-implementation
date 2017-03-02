@@ -24,7 +24,8 @@ import com.netflix.hollow.api.producer.HollowProducer;
 import com.netflix.hollow.api.producer.HollowProducer.Populator;
 import com.netflix.hollow.api.producer.HollowProducer.WriteState;
 
-import how.hollow.consumer.infrastructure.FilesystemStateRetriever;
+import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
+import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
 import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
 import how.hollow.producer.infrastructure.FilesystemAnnouncer;
@@ -35,15 +36,18 @@ public class BasicProducer {
 
         String namespace = args.length == 0 ? "basic" : args[0];
 
+        FilesystemPublisher publisher = new FilesystemPublisher(namespace);
         HollowProducer hollowProducer = new HollowProducer(
-                new FilesystemPublisher(namespace),
+                publisher,
                 new FilesystemAnnouncer(namespace));
 
         /// 1. Initialize your data model
         hollowProducer.initializeDataModel(Movie.class);
 
         /// 2. Restore from the previous announced state to resume the delta chain
-        hollowProducer.restore(new FilesystemStateRetriever(namespace));
+        FilesystemAnnouncementWatcher announcements = new FilesystemAnnouncementWatcher(publisher.getPublishDir());
+        FilesystemBlobRetriever blobRetriever = new FilesystemBlobRetriever(publisher.getPublishDir());
+        hollowProducer.restore(announcements.readLatestVersion(), blobRetriever);
 
         /// 3. Run one cycle, populating the new state with your source data
         hollowProducer.runCycle(new Populator(){

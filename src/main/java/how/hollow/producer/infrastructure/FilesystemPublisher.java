@@ -71,6 +71,10 @@ public class FilesystemPublisher implements HollowProducer.Publisher {
         publishBlob((FilesystemBlob)blob);
     }
 
+    public Path getPublishDir() {
+        return publishDir;
+    }
+
     private HollowProducer.Blob openDeltaBlob(long origin, long destination, String fileType) {
         Path deltaPath = productDir.resolve(String.format("%s-%d-%d",
                 fileType,

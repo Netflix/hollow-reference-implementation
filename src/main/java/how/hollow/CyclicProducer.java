@@ -31,7 +31,8 @@ import com.netflix.hollow.api.producer.HollowProducer.Populator;
 import com.netflix.hollow.api.producer.HollowProducer.WriteState;
 import com.netflix.hollow.api.producer.HollowProducerListener;
 
-import how.hollow.consumer.infrastructure.FilesystemStateRetriever;
+import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
+import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
 import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
 import how.hollow.producer.infrastructure.FilesystemAnnouncer;
@@ -99,7 +100,11 @@ public class CyclicProducer {
 
     public CyclicProducer(String namespace) {
         final Path productDir = makeProductDir(namespace);
-        final Path publishDir = makePublishDir(namespace);
+        this.publishDir = makePublishDir(namespace);
+
+        HollowProducer hollowProducer = new HollowProducer(
+                new FilesystemPublisher(productDir, publishDir),
+                new FilesystemAnnouncer(publishDir));
 
         HollowProducerListener logger = new StandardStreamsLogger(){
             @Override public void onProducerInit(long elapsed, TimeUnit unit) {
@@ -107,15 +112,9 @@ public class CyclicProducer {
                 super.onProducerInit(elapsed, unit);
             }
         };
-
-        HollowProducer hollowProducer = new HollowProducer(
-                new FilesystemPublisher(productDir, publishDir),
-                new FilesystemAnnouncer(publishDir));
         hollowProducer.addListener(logger);
 
-
         this.hollowProducer = hollowProducer;
-        this.stateRetriever = new FilesystemStateRetriever(namespace);
     }
 
     public CyclicProducer initializeDataModel(Class<?>...classes) {
@@ -124,7 +123,9 @@ public class CyclicProducer {
     }
 
     public CyclicProducer restore() {
-        hollowProducer.restore(stateRetriever);
+        FilesystemAnnouncementWatcher announcements = new FilesystemAnnouncementWatcher(publishDir);
+        FilesystemBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
+        hollowProducer.restore(announcements.readLatestVersion(), blobRetriever);
         return this;
     }
 
@@ -141,8 +142,8 @@ public class CyclicProducer {
     private static final DataMonkey dataMonkey = new DataMonkey();
     private static final long MIN_TIME_BETWEEN_CYCLES = SECONDS.toMillis(10);
 
+    private final Path publishDir;
     private final HollowProducer hollowProducer;
-    private final FilesystemStateRetriever stateRetriever;
 
     private void waitForMinCycleTime(long lastCycleTime) {
         long targetNextCycleTime = lastCycleTime + MIN_TIME_BETWEEN_CYCLES;

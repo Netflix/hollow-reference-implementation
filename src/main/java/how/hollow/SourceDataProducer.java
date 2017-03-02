@@ -27,13 +27,13 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.netflix.hollow.api.consumer.HollowConsumer;
 import com.netflix.hollow.api.producer.HollowProducer;
 import com.netflix.hollow.api.producer.HollowProducer.Populator;
 import com.netflix.hollow.api.producer.HollowProducer.WriteState;
 import com.netflix.hollow.api.producer.HollowProducerListener;
 
-import how.hollow.consumer.infrastructure.FilesystemStateRetriever;
+import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
+import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
 import how.hollow.producer.datamodel.Actor;
 import how.hollow.producer.datamodel.Movie;
 import how.hollow.producer.infrastructure.FilesystemAnnouncer;
@@ -94,7 +94,11 @@ public class SourceDataProducer {
 
     public SourceDataProducer(String namespace) {
         final Path productDir = makeProductDir(namespace);
-        final Path publishDir = makePublishDir(namespace);
+        this.publishDir = makePublishDir(namespace);
+
+        HollowProducer hollowProducer = new HollowProducer(
+                new FilesystemPublisher(productDir, publishDir),
+                new FilesystemAnnouncer(publishDir));
 
         HollowProducerListener logger = new StandardStreamsLogger(){
             @Override public void onProducerInit(long elapsed, TimeUnit unit) {
@@ -102,14 +106,9 @@ public class SourceDataProducer {
                 super.onProducerInit(elapsed, unit);
             }
         };
-
-        HollowProducer hollowProducer = new HollowProducer(
-                new FilesystemPublisher(productDir, publishDir),
-                new FilesystemAnnouncer(publishDir));
         hollowProducer.addListener(logger);
 
         this.hollowProducer = hollowProducer;
-        this.stateRetriever = new FilesystemStateRetriever(namespace);
     }
 
     public SourceDataProducer initializeDataModel(Class<?>...classes) {
@@ -118,7 +117,9 @@ public class SourceDataProducer {
     }
 
     public SourceDataProducer restore() {
-        hollowProducer.restore(stateRetriever);
+        FilesystemAnnouncementWatcher announcements = new FilesystemAnnouncementWatcher(publishDir);
+        FilesystemBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
+        hollowProducer.restore(announcements.readLatestVersion(), blobRetriever);
         return this;
     }
 
@@ -136,7 +137,7 @@ public class SourceDataProducer {
     private static final long MIN_TIME_BETWEEN_CYCLES = SECONDS.toMillis(10);
 
     private final HollowProducer hollowProducer;
-    private final HollowConsumer.StateRetriever stateRetriever;
+    private final Path publishDir;
 
     private void waitForMinCycleTime(long lastCycleTime) {
         long targetNextCycleTime = lastCycleTime + MIN_TIME_BETWEEN_CYCLES;
