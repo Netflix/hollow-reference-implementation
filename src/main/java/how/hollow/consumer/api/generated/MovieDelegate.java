@@ -12,6 +12,8 @@ public interface MovieDelegate extends HollowObjectDelegate {
 
     public int getTitleOrdinal(int ordinal);
 
+    public int getReleaseYearOrdinal(int ordinal);
+
     public int getActorsOrdinal(int ordinal);
 
     public MovieTypeAPI getTypeAPI();

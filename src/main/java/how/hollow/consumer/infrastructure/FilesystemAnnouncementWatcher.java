@@ -17,24 +17,32 @@
  */
 package how.hollow.consumer.infrastructure;
 
-import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
-import how.hollow.producer.infrastructure.FilesystemAnnouncer;
+import static java.nio.file.Files.newBufferedReader;
+
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
 
 public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
-
-    private final File publishDir;
-    
+    private final Path announcementPath;
     private long latestVersion;
-    
-    public FilesystemAnnouncementWatcher(File publishDir) {
-        this.publishDir = publishDir;
+
+    public FilesystemAnnouncementWatcher(String namespace) {
+        this(Paths.get(System.getProperty("java.io.tmpdir"), namespace, "published"));
+    }
+
+    public FilesystemAnnouncementWatcher(Path publishDir) {
+        this(publishDir, "announced.version");
+    }
+
+    public FilesystemAnnouncementWatcher(Path publishDir, String announcementFilename) {
+        announcementPath = publishDir.resolve(announcementFilename);
         this.latestVersion = readLatestVersion();
     }
-    
+
     @Override
     public long getLatestVersion() {
         return latestVersion;
@@ -51,27 +59,24 @@ public class FilesystemAnnouncementWatcher extends HollowAnnouncementWatcher {
                             latestVersion = currentVersion;
                             triggerAsyncRefresh();
                         }
-                        
-                            Thread.sleep(1000);
+
+                        Thread.sleep(1000);
                     } catch(Throwable th) { 
                         th.printStackTrace();
                     }
                 }
             }
         });
-        
+
         t.setDaemon(true);
         t.start();
     }
-    
+
     public long readLatestVersion() {
-        File f = new File(publishDir, FilesystemAnnouncer.ANNOUNCEMENT_FILENAME);
-        
-        try(BufferedReader reader = new BufferedReader(new FileReader(f))) {
+        try(BufferedReader reader = newBufferedReader(announcementPath)) {
             return Long.parseLong(reader.readLine());
         } catch(IOException e) {
-        	throw new RuntimeException(e);
+            return Long.MIN_VALUE;
         }
     }
-
 }

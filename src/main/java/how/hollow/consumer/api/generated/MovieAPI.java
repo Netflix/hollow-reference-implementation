@@ -29,11 +29,13 @@ public class MovieAPI extends HollowAPI {
 
     private final HollowObjectCreationSampler objectCreationSampler;
 
+    private final IntegerTypeAPI integerTypeAPI;
     private final StringTypeAPI stringTypeAPI;
     private final ActorTypeAPI actorTypeAPI;
     private final SetOfActorTypeAPI setOfActorTypeAPI;
     private final MovieTypeAPI movieTypeAPI;
 
+    private final HollowObjectProvider integerProvider;
     private final HollowObjectProvider stringProvider;
     private final HollowObjectProvider actorProvider;
     private final HollowObjectProvider setOfActorProvider;
@@ -56,7 +58,26 @@ public class MovieAPI extends HollowAPI {
         HollowTypeDataAccess typeDataAccess;
         HollowFactory factory;
 
-        objectCreationSampler = new HollowObjectCreationSampler("String","Actor","SetOfActor","Movie");
+        objectCreationSampler = new HollowObjectCreationSampler("Integer","String","Actor","SetOfActor","Movie");
+
+        typeDataAccess = dataAccess.getTypeDataAccess("Integer");
+        if(typeDataAccess != null) {
+            integerTypeAPI = new IntegerTypeAPI(this, (HollowObjectTypeDataAccess)typeDataAccess);
+        } else {
+            integerTypeAPI = new IntegerTypeAPI(this, new HollowObjectMissingDataAccess(dataAccess, "Integer"));
+        }
+        addTypeAPI(integerTypeAPI);
+        factory = factoryOverrides.get("Integer");
+        if(factory == null)
+            factory = new IntegerHollowFactory();
+        if(cachedTypes.contains("Integer")) {
+            HollowObjectCacheProvider previousCacheProvider = null;
+            if(previousCycleAPI != null && (previousCycleAPI.integerProvider instanceof HollowObjectCacheProvider))
+                previousCacheProvider = (HollowObjectCacheProvider) previousCycleAPI.integerProvider;
+            integerProvider = new HollowObjectCacheProvider(typeDataAccess, integerTypeAPI, factory, previousCacheProvider);
+        } else {
+            integerProvider = new HollowObjectFactoryProvider(typeDataAccess, integerTypeAPI, factory);
+        }
 
         typeDataAccess = dataAccess.getTypeDataAccess("String");
         if(typeDataAccess != null) {
@@ -137,6 +158,8 @@ public class MovieAPI extends HollowAPI {
     }
 
     public void detachCaches() {
+        if(integerProvider instanceof HollowObjectCacheProvider)
+            ((HollowObjectCacheProvider)integerProvider).detach();
         if(stringProvider instanceof HollowObjectCacheProvider)
             ((HollowObjectCacheProvider)stringProvider).detach();
         if(actorProvider instanceof HollowObjectCacheProvider)
@@ -147,6 +170,9 @@ public class MovieAPI extends HollowAPI {
             ((HollowObjectCacheProvider)movieProvider).detach();
     }
 
+    public IntegerTypeAPI getIntegerTypeAPI() {
+        return integerTypeAPI;
+    }
     public StringTypeAPI getStringTypeAPI() {
         return stringTypeAPI;
     }
@@ -159,6 +185,17 @@ public class MovieAPI extends HollowAPI {
     public MovieTypeAPI getMovieTypeAPI() {
         return movieTypeAPI;
     }
+    public Collection<IntegerHollow> getAllIntegerHollow() {
+        return new AllHollowRecordCollection<IntegerHollow>(getDataAccess().getTypeDataAccess("Integer").getTypeState()) {
+            protected IntegerHollow getForOrdinal(int ordinal) {
+                return getIntegerHollow(ordinal);
+            }
+        };
+    }
+    public IntegerHollow getIntegerHollow(int ordinal) {
+        objectCreationSampler.recordCreation(0);
+        return (IntegerHollow)integerProvider.getHollowObject(ordinal);
+    }
     public Collection<StringHollow> getAllStringHollow() {
         return new AllHollowRecordCollection<StringHollow>(getDataAccess().getTypeDataAccess("String").getTypeState()) {
             protected StringHollow getForOrdinal(int ordinal) {
@@ -167,7 +204,7 @@ public class MovieAPI extends HollowAPI {
         };
     }
     public StringHollow getStringHollow(int ordinal) {
-        objectCreationSampler.recordCreation(0);
+        objectCreationSampler.recordCreation(1);
         return (StringHollow)stringProvider.getHollowObject(ordinal);
     }
     public Collection<ActorHollow> getAllActorHollow() {
@@ -178,7 +215,7 @@ public class MovieAPI extends HollowAPI {
         };
     }
     public ActorHollow getActorHollow(int ordinal) {
-        objectCreationSampler.recordCreation(1);
+        objectCreationSampler.recordCreation(2);
         return (ActorHollow)actorProvider.getHollowObject(ordinal);
     }
     public Collection<SetOfActorHollow> getAllSetOfActorHollow() {
@@ -189,7 +226,7 @@ public class MovieAPI extends HollowAPI {
         };
     }
     public SetOfActorHollow getSetOfActorHollow(int ordinal) {
-        objectCreationSampler.recordCreation(2);
+        objectCreationSampler.recordCreation(3);
         return (SetOfActorHollow)setOfActorProvider.getHollowObject(ordinal);
     }
     public Collection<MovieHollow> getAllMovieHollow() {
@@ -200,7 +237,7 @@ public class MovieAPI extends HollowAPI {
         };
     }
     public MovieHollow getMovieHollow(int ordinal) {
-        objectCreationSampler.recordCreation(3);
+        objectCreationSampler.recordCreation(4);
         return (MovieHollow)movieProvider.getHollowObject(ordinal);
     }
     public void setSamplingDirector(HollowSamplingDirector director) {

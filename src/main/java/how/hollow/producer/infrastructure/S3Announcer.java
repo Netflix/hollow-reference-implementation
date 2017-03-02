@@ -20,9 +20,9 @@ package how.hollow.producer.infrastructure;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import how.hollow.producer.Announcer;
+import com.netflix.hollow.api.producer.HollowProducer;
 
-public class S3Announcer implements Announcer {
+public class S3Announcer implements HollowProducer.Announcer {
 
     public static final String ANNOUNCEMENT_OBJECTNAME = "announced.version";
 

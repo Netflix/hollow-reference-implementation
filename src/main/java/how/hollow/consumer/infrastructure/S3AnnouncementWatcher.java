@@ -21,6 +21,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
+
 import how.hollow.producer.infrastructure.S3Announcer;
 
 public class S3AnnouncementWatcher extends HollowAnnouncementWatcher {

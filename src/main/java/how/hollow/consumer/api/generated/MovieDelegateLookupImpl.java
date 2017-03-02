@@ -25,6 +25,10 @@ public class MovieDelegateLookupImpl extends HollowObjectAbstractDelegate implem
         return typeAPI.getTitleOrdinal(ordinal);
     }
 
+    public int getReleaseYearOrdinal(int ordinal) {
+        return typeAPI.getReleaseYearOrdinal(ordinal);
+    }
+
     public int getActorsOrdinal(int ordinal) {
         return typeAPI.getActorsOrdinal(ordinal);
     }

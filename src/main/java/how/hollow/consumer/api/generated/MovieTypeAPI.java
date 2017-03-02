@@ -12,6 +12,7 @@ public class MovieTypeAPI extends HollowObjectTypeAPI {
         super(api, typeDataAccess, new String[] {
             "id",
             "title",
+            "releaseYear",
             "actors"
         });
         this.delegateLookupImpl = new MovieDelegateLookupImpl(this);
@@ -48,10 +49,20 @@ public class MovieTypeAPI extends HollowObjectTypeAPI {
         return getAPI().getStringTypeAPI();
     }
 
-    public int getActorsOrdinal(int ordinal) {
+    public int getReleaseYearOrdinal(int ordinal) {
         if(fieldIndex[2] == -1)
-            return missingDataHandler().handleReferencedOrdinal("Movie", ordinal, "actors");
+            return missingDataHandler().handleReferencedOrdinal("Movie", ordinal, "releaseYear");
         return getTypeDataAccess().readOrdinal(ordinal, fieldIndex[2]);
+    }
+
+    public IntegerTypeAPI getReleaseYearTypeAPI() {
+        return getAPI().getIntegerTypeAPI();
+    }
+
+    public int getActorsOrdinal(int ordinal) {
+        if(fieldIndex[3] == -1)
+            return missingDataHandler().handleReferencedOrdinal("Movie", ordinal, "actors");
+        return getTypeDataAccess().readOrdinal(ordinal, fieldIndex[3]);
     }
 
     public SetOfActorTypeAPI getActorsTypeAPI() {

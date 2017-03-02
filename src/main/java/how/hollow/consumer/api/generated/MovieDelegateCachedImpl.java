@@ -11,12 +11,14 @@ public class MovieDelegateCachedImpl extends HollowObjectAbstractDelegate implem
 
     private final Integer id;
     private final int titleOrdinal;
+    private final int releaseYearOrdinal;
     private final int actorsOrdinal;
    private MovieTypeAPI typeAPI;
 
     public MovieDelegateCachedImpl(MovieTypeAPI typeAPI, int ordinal) {
         this.id = typeAPI.getIdBoxed(ordinal);
         this.titleOrdinal = typeAPI.getTitleOrdinal(ordinal);
+        this.releaseYearOrdinal = typeAPI.getReleaseYearOrdinal(ordinal);
         this.actorsOrdinal = typeAPI.getActorsOrdinal(ordinal);
         this.typeAPI = typeAPI;
     }
@@ -31,6 +33,10 @@ public class MovieDelegateCachedImpl extends HollowObjectAbstractDelegate implem
 
     public int getTitleOrdinal(int ordinal) {
         return titleOrdinal;
+    }
+
+    public int getReleaseYearOrdinal(int ordinal) {
+        return releaseYearOrdinal;
     }
 
     public int getActorsOrdinal(int ordinal) {

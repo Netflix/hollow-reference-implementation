@@ -25,6 +25,13 @@ public class MovieHollow extends HollowObject {
         return  api().getStringHollow(refOrdinal);
     }
 
+    public IntegerHollow _getReleaseYear() {
+        int refOrdinal = delegate().getReleaseYearOrdinal(ordinal);
+        if(refOrdinal == -1)
+            return null;
+        return  api().getIntegerHollow(refOrdinal);
+    }
+
     public SetOfActorHollow _getActors() {
         int refOrdinal = delegate().getActorsOrdinal(ordinal);
         if(refOrdinal == -1)
