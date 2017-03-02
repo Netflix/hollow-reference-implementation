@@ -13,7 +13,7 @@ repositories {
 }
  
 dependencies {
-    compile 'com.netflix.hollow:hollow:2.1.0'
+    compile 'com.netflix.hollow:hollow:2.2.1'
     compile 'com.netflix.hollow:hollow-diff-ui:2.1.0'
 
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.49'
