@@ -84,6 +84,8 @@ public class APIGenerator {
         
         File apiCodeFolder = findProjectFolder(GENERATED_API_CODE_FOLDER);
         
+        apiCodeFolder.mkdirs();
+        
         for(File f : apiCodeFolder.listFiles())
             f.delete();
         
