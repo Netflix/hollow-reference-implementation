@@ -13,8 +13,8 @@ repositories {
 }
  
 dependencies {
-    compile 'com.netflix.hollow:hollow:2.2.1'
-    compile 'com.netflix.hollow:hollow-diff-ui:2.1.0'
+    compile 'com.netflix.hollow:hollow:2.2.5'
+    compile 'com.netflix.hollow:hollow-diff-ui:2.2.5'
 
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.49'
     compile 'com.amazonaws:aws-java-sdk-dynamodb:1.11.49'
