@@ -17,13 +17,14 @@
  */
 package how.hollow.consumer.infrastructure;
 
+import com.amazonaws.SdkBaseException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.util.Base16Lower;
+import com.amazonaws.services.s3.transfer.Download;
+import com.amazonaws.services.s3.transfer.TransferManager;
 import com.netflix.hollow.api.client.HollowBlob;
 import com.netflix.hollow.api.client.HollowBlobRetriever;
 import com.netflix.hollow.core.memory.encoding.VarInt;
@@ -31,22 +32,19 @@ import how.hollow.producer.infrastructure.S3Publisher;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import org.apache.commons.io.IOUtils;
 
 public class S3BlobRetriever implements HollowBlobRetriever {
 
     private final AmazonS3 s3;
+    private final TransferManager s3TransferManager;
     private final String bucketName;
     private final String blobNamespace;
 
     public S3BlobRetriever(AWSCredentials credentials, String bucketName, String blobNamespace) {
         this.s3 = new AmazonS3Client(credentials);
+        this.s3TransferManager = new TransferManager(s3);
         this.bucketName = bucketName;
         this.blobNamespace = blobNamespace;
     }
@@ -157,33 +155,17 @@ public class S3BlobRetriever implements HollowBlobRetriever {
     }
     
     private File downloadFile(String objectName) throws IOException {
-    	for(int retryCount = 0; retryCount < 3; retryCount++) {
-    		try {
-		    	File tempFile = new File(System.getProperty("java.io.tmpdir"), objectName.replace('/', '-'));
-		    	
-		    	S3Object s3Object = s3.getObject(bucketName, objectName);
-		    	
-		    	MessageDigest md = MessageDigest.getInstance("MD5");
-		    	try (
-		    			InputStream is = new DigestInputStream(s3Object.getObjectContent(), md);
-		    			OutputStream os = new FileOutputStream(tempFile)
-		    			) {
-		    		IOUtils.copy(is, os);
-		    	}
-		    	
-		    	String expectedMD5 = s3Object.getObjectMetadata().getETag();
-		    	String actualMD5 = Base16Lower.encodeAsString(md.digest());
-		    	
-		    	if (!actualMD5.equals(expectedMD5))
-		    		throw new IOException("MD5 sum did not match expected!");
-		    	
-		    	return tempFile;
-    		} catch(Exception e) {
-    			e.printStackTrace();
-    		}
+    	File tempFile = new File(System.getProperty("java.io.tmpdir"), objectName.replace('/', '-'));
+    	
+    	Download download = s3TransferManager.download(bucketName, objectName, tempFile);
+    	
+    	try {
+    	    download.waitForCompletion();
+    	} catch(SdkBaseException | InterruptedException e) {
+    	    throw new RuntimeException(e);
     	}
     	
-        throw new IOException("Unable to successfully retrieve stream from S3 after 3 retries");
+    	return tempFile;
     }
 
 }
