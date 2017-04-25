@@ -17,6 +17,9 @@
  */
 package how.hollow.producer.datamodel;
 
+import com.netflix.hollow.core.write.objectmapper.HollowPrimaryKey;
+
+@HollowPrimaryKey(fields="actorId")
 public class Actor {
     public int actorId;
     public String actorName;

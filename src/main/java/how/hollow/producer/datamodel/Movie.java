@@ -18,8 +18,10 @@
 package how.hollow.producer.datamodel;
 
 import com.netflix.hollow.core.write.objectmapper.HollowHashKey;
+import com.netflix.hollow.core.write.objectmapper.HollowPrimaryKey;
 import java.util.Set;
 
+@HollowPrimaryKey(fields="id")
 public class Movie {
 
     public int id;

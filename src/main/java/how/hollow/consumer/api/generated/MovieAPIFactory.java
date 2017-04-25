@@ -21,7 +21,7 @@ public class MovieAPIFactory implements HollowAPIFactory {
 
     @Override
     public HollowAPI createAPI(HollowDataAccess dataAccess) {
-        return new MovieAPI(dataAccess);
+        return new MovieAPI(dataAccess, cachedTypes);
     }
 
     @Override
