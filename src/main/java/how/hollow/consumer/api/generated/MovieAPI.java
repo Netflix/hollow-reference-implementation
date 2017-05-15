@@ -159,49 +159,49 @@ public class MovieAPI extends HollowAPI {
     public MovieTypeAPI getMovieTypeAPI() {
         return movieTypeAPI;
     }
-    public Collection<StringHollow> getAllStringHollow() {
-        return new AllHollowRecordCollection<StringHollow>(getDataAccess().getTypeDataAccess("String").getTypeState()) {
-            protected StringHollow getForOrdinal(int ordinal) {
-                return getStringHollow(ordinal);
+    public Collection<HString> getAllHString() {
+        return new AllHollowRecordCollection<HString>(getDataAccess().getTypeDataAccess("String").getTypeState()) {
+            protected HString getForOrdinal(int ordinal) {
+                return getHString(ordinal);
             }
         };
     }
-    public StringHollow getStringHollow(int ordinal) {
+    public HString getHString(int ordinal) {
         objectCreationSampler.recordCreation(0);
-        return (StringHollow)stringProvider.getHollowObject(ordinal);
+        return (HString)stringProvider.getHollowObject(ordinal);
     }
-    public Collection<ActorHollow> getAllActorHollow() {
-        return new AllHollowRecordCollection<ActorHollow>(getDataAccess().getTypeDataAccess("Actor").getTypeState()) {
-            protected ActorHollow getForOrdinal(int ordinal) {
-                return getActorHollow(ordinal);
+    public Collection<Actor> getAllActor() {
+        return new AllHollowRecordCollection<Actor>(getDataAccess().getTypeDataAccess("Actor").getTypeState()) {
+            protected Actor getForOrdinal(int ordinal) {
+                return getActor(ordinal);
             }
         };
     }
-    public ActorHollow getActorHollow(int ordinal) {
+    public Actor getActor(int ordinal) {
         objectCreationSampler.recordCreation(1);
-        return (ActorHollow)actorProvider.getHollowObject(ordinal);
+        return (Actor)actorProvider.getHollowObject(ordinal);
     }
-    public Collection<SetOfActorHollow> getAllSetOfActorHollow() {
-        return new AllHollowRecordCollection<SetOfActorHollow>(getDataAccess().getTypeDataAccess("SetOfActor").getTypeState()) {
-            protected SetOfActorHollow getForOrdinal(int ordinal) {
-                return getSetOfActorHollow(ordinal);
+    public Collection<SetOfActor> getAllSetOfActor() {
+        return new AllHollowRecordCollection<SetOfActor>(getDataAccess().getTypeDataAccess("SetOfActor").getTypeState()) {
+            protected SetOfActor getForOrdinal(int ordinal) {
+                return getSetOfActor(ordinal);
             }
         };
     }
-    public SetOfActorHollow getSetOfActorHollow(int ordinal) {
+    public SetOfActor getSetOfActor(int ordinal) {
         objectCreationSampler.recordCreation(2);
-        return (SetOfActorHollow)setOfActorProvider.getHollowObject(ordinal);
+        return (SetOfActor)setOfActorProvider.getHollowObject(ordinal);
     }
-    public Collection<MovieHollow> getAllMovieHollow() {
-        return new AllHollowRecordCollection<MovieHollow>(getDataAccess().getTypeDataAccess("Movie").getTypeState()) {
-            protected MovieHollow getForOrdinal(int ordinal) {
-                return getMovieHollow(ordinal);
+    public Collection<Movie> getAllMovie() {
+        return new AllHollowRecordCollection<Movie>(getDataAccess().getTypeDataAccess("Movie").getTypeState()) {
+            protected Movie getForOrdinal(int ordinal) {
+                return getMovie(ordinal);
             }
         };
     }
-    public MovieHollow getMovieHollow(int ordinal) {
+    public Movie getMovie(int ordinal) {
         objectCreationSampler.recordCreation(3);
-        return (MovieHollow)movieProvider.getHollowObject(ordinal);
+        return (Movie)movieProvider.getHollowObject(ordinal);
     }
     public void setSamplingDirector(HollowSamplingDirector director) {
         super.setSamplingDirector(director);

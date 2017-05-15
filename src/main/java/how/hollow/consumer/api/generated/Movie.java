@@ -4,32 +4,32 @@ import com.netflix.hollow.api.objects.HollowObject;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
 
 @SuppressWarnings("all")
-public class MovieHollow extends HollowObject {
+public class Movie extends HollowObject {
 
-    public MovieHollow(MovieDelegate delegate, int ordinal) {
+    public Movie(MovieDelegate delegate, int ordinal) {
         super(delegate, ordinal);
     }
 
-    public int _getId() {
+    public int getId() {
         return delegate().getId(ordinal);
     }
 
-    public Integer _getIdBoxed() {
+    public Integer getIdBoxed() {
         return delegate().getIdBoxed(ordinal);
     }
 
-    public StringHollow _getTitle() {
+    public HString getTitle() {
         int refOrdinal = delegate().getTitleOrdinal(ordinal);
         if(refOrdinal == -1)
             return null;
-        return  api().getStringHollow(refOrdinal);
+        return  api().getHString(refOrdinal);
     }
 
-    public SetOfActorHollow _getActors() {
+    public SetOfActor getActors() {
         int refOrdinal = delegate().getActorsOrdinal(ordinal);
         if(refOrdinal == -1)
             return null;
-        return  api().getSetOfActorHollow(refOrdinal);
+        return  api().getSetOfActor(refOrdinal);
     }
 
     public MovieAPI api() {

@@ -22,13 +22,19 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
+import com.netflix.hollow.api.consumer.HollowConsumer;
+import com.netflix.hollow.api.consumer.HollowConsumer.AnnouncementWatcher;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public class DynamoDBAnnouncementWatcher extends HollowAnnouncementWatcher {
+public class DynamoDBAnnouncementWatcher implements AnnouncementWatcher {
 
     private final DynamoDB dynamoDB;
     private final String tableName;
     private final String blobNamespace;
+    
+    private final List<HollowConsumer> subscribedConsumers;
 
     private long latestVersion;
 
@@ -36,16 +42,14 @@ public class DynamoDBAnnouncementWatcher extends HollowAnnouncementWatcher {
         this.dynamoDB = new DynamoDB(new AmazonDynamoDBClient(credentials));
         this.tableName = tableName;
         this.blobNamespace = blobNamespace;
+        this.subscribedConsumers = Collections.synchronizedList(new ArrayList<HollowConsumer>());
+        
         this.latestVersion = readLatestVersion();
+        
+        setupPollingThread();
     }
-
-    @Override
-    public long getLatestVersion() {
-        return latestVersion;
-    }
-
-    @Override
-    public void subscribeToEvents() {
+    
+    public void setupPollingThread() {
         Thread t = new Thread(new Runnable() {
             public void run() {
                 while (true) {
@@ -53,7 +57,8 @@ public class DynamoDBAnnouncementWatcher extends HollowAnnouncementWatcher {
                         long currentVersion = readLatestVersion();
                         if (latestVersion != currentVersion) {
                             latestVersion = currentVersion;
-                            triggerAsyncRefresh();
+                            for(HollowConsumer consumer : subscribedConsumers)
+                                consumer.triggerAsyncRefresh();
                         }
 
                         Thread.sleep(1000);
@@ -64,8 +69,19 @@ public class DynamoDBAnnouncementWatcher extends HollowAnnouncementWatcher {
             }
         });
 
+        t.setName("hollow-dynamodb-announcementwatcher-poller");
         t.setDaemon(true);
         t.start();
+    }
+
+    @Override
+    public long getLatestVersion() {
+        return latestVersion;
+    }
+
+    @Override
+    public void subscribeToUpdates(HollowConsumer consumer) {
+        subscribedConsumers.add(consumer);
     }
 
     public long readLatestVersion() {

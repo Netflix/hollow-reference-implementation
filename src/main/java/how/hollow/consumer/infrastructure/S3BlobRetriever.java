@@ -25,8 +25,8 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
-import com.netflix.hollow.api.client.HollowBlob;
-import com.netflix.hollow.api.client.HollowBlobRetriever;
+import com.netflix.hollow.api.consumer.HollowConsumer.Blob;
+import com.netflix.hollow.api.consumer.HollowConsumer.BlobRetriever;
 import com.netflix.hollow.core.memory.encoding.VarInt;
 import how.hollow.producer.infrastructure.S3Publisher;
 import java.io.BufferedInputStream;
@@ -35,7 +35,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class S3BlobRetriever implements HollowBlobRetriever {
+public class S3BlobRetriever implements BlobRetriever {
 
     private final AmazonS3 s3;
     private final TransferManager s3TransferManager;
@@ -50,7 +50,7 @@ public class S3BlobRetriever implements HollowBlobRetriever {
     }
 
     @Override
-    public HollowBlob retrieveSnapshotBlob(long desiredVersion) {
+    public Blob retrieveSnapshotBlob(long desiredVersion) {
         try {
             return knownSnapshotBlob(desiredVersion);
         } catch (AmazonS3Exception transitionNotFound) { } 
@@ -89,7 +89,7 @@ public class S3BlobRetriever implements HollowBlobRetriever {
     }
 
     @Override
-    public HollowBlob retrieveDeltaBlob(long currentVersion) {
+    public Blob retrieveDeltaBlob(long currentVersion) {
         try {
             return knownDeltaBlob("delta", currentVersion);
         } catch (AmazonS3Exception transitionNotFound) {
@@ -98,7 +98,7 @@ public class S3BlobRetriever implements HollowBlobRetriever {
     }
 
     @Override
-    public HollowBlob retrieveReverseDeltaBlob(long currentVersion) {
+    public Blob retrieveReverseDeltaBlob(long currentVersion) {
         try {
             return knownDeltaBlob("reversedelta", currentVersion);
         } catch (AmazonS3Exception transitionNotFound) {
@@ -106,7 +106,7 @@ public class S3BlobRetriever implements HollowBlobRetriever {
         }
     }
 
-    private HollowBlob knownSnapshotBlob(long desiredVersion) {
+    private Blob knownSnapshotBlob(long desiredVersion) {
         String objectName = S3Publisher.getS3ObjectName(blobNamespace, "snapshot", desiredVersion);
         ObjectMetadata objectMetadata = s3.getObjectMetadata(bucketName, objectName);
         long toState = Long.parseLong(objectMetadata.getUserMetaDataOf("to_state"));
@@ -114,7 +114,7 @@ public class S3BlobRetriever implements HollowBlobRetriever {
         return new S3Blob(objectName, toState);
     }
     
-    private HollowBlob knownDeltaBlob(String fileType, long fromVersion) {
+    private Blob knownDeltaBlob(String fileType, long fromVersion) {
         String objectName = S3Publisher.getS3ObjectName(blobNamespace, fileType, fromVersion);
         ObjectMetadata objectMetadata = s3.getObjectMetadata(bucketName, objectName);
         long fromState = Long.parseLong(objectMetadata.getUserMetaDataOf("from_state"));
@@ -123,7 +123,7 @@ public class S3BlobRetriever implements HollowBlobRetriever {
         return new S3Blob(objectName, fromState, toState);
     }
 
-    private class S3Blob extends HollowBlob {
+    private class S3Blob extends Blob {
 
         private final String objectName;
 

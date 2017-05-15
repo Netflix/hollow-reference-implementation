@@ -4,25 +4,25 @@ import com.netflix.hollow.api.objects.HollowObject;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
 
 @SuppressWarnings("all")
-public class ActorHollow extends HollowObject {
+public class Actor extends HollowObject {
 
-    public ActorHollow(ActorDelegate delegate, int ordinal) {
+    public Actor(ActorDelegate delegate, int ordinal) {
         super(delegate, ordinal);
     }
 
-    public int _getActorId() {
+    public int getActorId() {
         return delegate().getActorId(ordinal);
     }
 
-    public Integer _getActorIdBoxed() {
+    public Integer getActorIdBoxed() {
         return delegate().getActorIdBoxed(ordinal);
     }
 
-    public StringHollow _getActorName() {
+    public HString getActorName() {
         int refOrdinal = delegate().getActorNameOrdinal(ordinal);
         if(refOrdinal == -1)
             return null;
-        return  api().getStringHollow(refOrdinal);
+        return  api().getHString(refOrdinal);
     }
 
     public MovieAPI api() {

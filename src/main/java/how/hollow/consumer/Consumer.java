@@ -17,71 +17,70 @@
  */
 package how.hollow.consumer;
 
-import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
-import com.netflix.hollow.api.client.HollowBlobRetriever;
-import com.netflix.hollow.api.client.HollowClient;
-import com.netflix.hollow.core.read.engine.HollowReadStateEngine;
+import com.netflix.hollow.api.consumer.HollowConsumer;
+import com.netflix.hollow.api.consumer.fs.HollowFilesystemAnnouncementWatcher;
+import com.netflix.hollow.api.consumer.fs.HollowFilesystemBlobRetriever;
 import com.netflix.hollow.explorer.ui.jetty.HollowExplorerUIServer;
 import com.netflix.hollow.history.ui.jetty.HollowHistoryUIServer;
+import how.hollow.consumer.api.generated.Actor;
+import how.hollow.consumer.api.generated.Movie;
 import how.hollow.consumer.api.generated.MovieAPI;
+import how.hollow.consumer.api.generated.MovieAPIHashIndex;
+import how.hollow.consumer.api.generated.MoviePrimaryKeyIndex;
 import how.hollow.consumer.history.ConsumerHistoryListener;
-import how.hollow.consumer.infrastructure.FilesystemAnnouncementWatcher;
-import how.hollow.consumer.infrastructure.FilesystemBlobRetriever;
 import how.hollow.producer.Producer;
 import java.io.File;
 
 public class Consumer {
-    
-    private final HollowClient client;
-    private final ConsumerHistoryListener historyListener;
-    
-    public Consumer(HollowBlobRetriever blobRetriever, HollowAnnouncementWatcher announcementWatcher) {
-    	this.historyListener = new ConsumerHistoryListener();
-    	
-        this.client = new HollowClient.Builder()
-                .withBlobRetriever(blobRetriever)
-                .withAnnouncementWatcher(announcementWatcher)
-                .withUpdateListener(historyListener)
-                .withGeneratedAPIClass(MovieAPI.class)
-                .build();
-    }
-    
-    public void initialize() {
-        client.triggerRefresh();
-    }
-    
-    public MovieAPI getAPI() {
-        return (MovieAPI) client.getAPI();
-    }
-    
-    public HollowReadStateEngine getStateEngine() {
-        return client.getStateEngine();
-    }
     
     public static void main(String args[]) throws Exception {
         File publishDir = new File(Producer.SCRATCH_DIR, "publish-dir");
         
         System.out.println("I AM THE CONSUMER.  I WILL READ FROM " + publishDir.getAbsolutePath());
 
-        HollowBlobRetriever blobRetriever = new FilesystemBlobRetriever(publishDir);
-        HollowAnnouncementWatcher announcementWatcher = new FilesystemAnnouncementWatcher(publishDir);
+        ConsumerHistoryListener historyListener = new ConsumerHistoryListener();
         
-        Consumer consumer = new Consumer(blobRetriever, announcementWatcher);
-        consumer.initialize();
+        HollowConsumer.BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir);
+        HollowConsumer.AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir);
         
-        /// example usage of client API:
-        MovieAPI api = (MovieAPI)consumer.client.getAPI();
-        System.out.println("THERE ARE " + api.getAllMovieHollow().size() + " MOVIES IN THE DATASET AT STARTUP");
+        HollowConsumer consumer = HollowConsumer.withBlobRetriever(blobRetriever)
+                                                .withAnnouncementWatcher(announcementWatcher)
+                                                .withGeneratedAPIClass(MovieAPI.class)
+                                                .withRefreshListener(historyListener)
+                                                .build();
+        
+        consumer.triggerRefresh();
+        
+        hereIsHowToUseTheDataProgrammatically(consumer);
+        
+        /// start a history server on port 7777
+        HollowHistoryUIServer historyServer = new HollowHistoryUIServer(historyListener.getHistory(), 7777);
+        historyServer.start();
+        
+        /// start an explorer server on port 7778
+        HollowExplorerUIServer explorerServer = new HollowExplorerUIServer(consumer, 7778);
+        explorerServer.start();
+        
+        historyServer.join();
+    }
 
-        /// start a Hollow History UI server (point your browser to http://localhost:7777)
-        HollowHistoryUIServer historyUIServer = new HollowHistoryUIServer(consumer.historyListener.getHistory(), 7777);
-        historyUIServer.start();
+    private static void hereIsHowToUseTheDataProgrammatically(HollowConsumer consumer) {
+        /// create an index for Movie based on its primary key (Id)
+        MoviePrimaryKeyIndex idx = new MoviePrimaryKeyIndex(consumer);
+        /// create an index for movies by the names of cast members
+        MovieAPIHashIndex moviesByActorName = new MovieAPIHashIndex(consumer, "Movie", "", "actors.element.actorName.value");
+
+        /// find the movie for a some known ID
+        Movie foundMovie = idx.findMatch(1000004);
         
-        /// start a Hollow Explorer UI server (point your browser to http://localhost:7778)
-        HollowExplorerUIServer explorerUIServer = new HollowExplorerUIServer(consumer.client, 7778);
-        explorerUIServer.start();
-        
-        explorerUIServer.join();
+        /// for each actor in that movie
+        for(Actor actor : foundMovie.getActors()) {
+            /// get all of movies of which they are cast members
+            for(Movie movie : moviesByActorName.findMovieMatches(actor.getActorName().getValue())) {
+                /// and just print the result
+                System.out.println(actor.getActorName().getValue() + " starred in " + movie.getTitle().getValue());
+            }
+        }
     }
     
 }
