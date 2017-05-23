@@ -26,7 +26,7 @@ public class Movie {
 
     public int id;
     public String title;
-    @HollowHashKey(fields="actorId")
+    @HollowHashKey(fields="actorName")
     public Set<Actor> actors;
     
     public Movie() { }

@@ -6,15 +6,15 @@ import com.netflix.hollow.api.objects.delegate.HollowSetDelegate;
 import com.netflix.hollow.api.objects.generic.GenericHollowRecordHelper;
 
 @SuppressWarnings("all")
-public class SetOfActorHollow extends HollowSet<ActorHollow> {
+public class SetOfActor extends HollowSet<Actor> {
 
-    public SetOfActorHollow(HollowSetDelegate delegate, int ordinal) {
+    public SetOfActor(HollowSetDelegate delegate, int ordinal) {
         super(delegate, ordinal);
     }
 
     @Override
-    public ActorHollow instantiateElement(int ordinal) {
-        return (ActorHollow) api().getActorHollow(ordinal);
+    public Actor instantiateElement(int ordinal) {
+        return (Actor) api().getActor(ordinal);
     }
 
     @Override

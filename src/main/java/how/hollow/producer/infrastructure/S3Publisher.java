@@ -25,9 +25,10 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.netflix.hollow.api.producer.HollowProducer.Blob;
+import com.netflix.hollow.api.producer.HollowProducer.Publisher;
 import com.netflix.hollow.core.memory.encoding.HashCodes;
 import com.netflix.hollow.core.memory.encoding.VarInt;
-import how.hollow.producer.Publisher;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -55,43 +56,55 @@ public class S3Publisher implements Publisher {
         this.blobNamespace = blobNamespace;
         this.snapshotIndex = initializeSnapshotIndex();
     }
-
+    
     @Override
-    public void publishSnapshot(File snapshotFile, long stateVersion) {
-        String objectName = getS3ObjectName(blobNamespace, "snapshot", stateVersion);
+    public void publish(Blob blob) {
+        switch(blob.getType()) {
+        case SNAPSHOT:
+            publishSnapshot(blob);
+            break;
+        case DELTA:
+            publishDelta(blob);
+            break;
+        case REVERSE_DELTA:
+            publishReverseDelta(blob);
+            break;
+        }
+    }
+
+    public void publishSnapshot(Blob blob) {
+        String objectName = getS3ObjectName(blobNamespace, "snapshot", blob.getToVersion());
 
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.addUserMetadata("to_state", String.valueOf(stateVersion));
-        metadata.setHeader("Content-Length", snapshotFile.length());
+        metadata.addUserMetadata("to_state", String.valueOf(blob.getToVersion()));
+        metadata.setHeader("Content-Length", blob.getFile().length());
         
-        uploadFile(snapshotFile, objectName, metadata);
+        uploadFile(blob.getFile(), objectName, metadata);
         
         /// now we update the snapshot index
-        updateSnapshotIndex(stateVersion);
+        updateSnapshotIndex(blob.getToVersion());
     }
 
-    @Override
-    public void publishDelta(File deltaFile, long previousVersion, long currentVersion) {
-        String objectName = getS3ObjectName(blobNamespace, "delta", previousVersion);
+    public void publishDelta(Blob blob) {
+        String objectName = getS3ObjectName(blobNamespace, "delta", blob.getFromVersion());
         
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.addUserMetadata("from_state", String.valueOf(previousVersion));
-        metadata.addUserMetadata("to_state", String.valueOf(currentVersion));
-        metadata.setHeader("Content-Length", deltaFile.length());
+        metadata.addUserMetadata("from_state", String.valueOf(blob.getFromVersion()));
+        metadata.addUserMetadata("to_state", String.valueOf(blob.getToVersion()));
+        metadata.setHeader("Content-Length", blob.getFile().length());
         
-        uploadFile(deltaFile, objectName, metadata);
+        uploadFile(blob.getFile(), objectName, metadata);
     }
 
-    @Override
-    public void publishReverseDelta(File reverseDeltaFile, long previousVersion, long currentVersion) {
-        String objectName = getS3ObjectName(blobNamespace, "reversedelta", currentVersion);
+    public void publishReverseDelta(Blob blob) {
+        String objectName = getS3ObjectName(blobNamespace, "reversedelta", blob.getFromVersion());
         
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.addUserMetadata("from_state", String.valueOf(currentVersion));
-        metadata.addUserMetadata("to_state", String.valueOf(previousVersion));
-        metadata.setHeader("Content-Length", reverseDeltaFile.length());
+        metadata.addUserMetadata("from_state", String.valueOf(blob.getFromVersion()));
+        metadata.addUserMetadata("to_state", String.valueOf(blob.getToVersion()));
+        metadata.setHeader("Content-Length", blob.getFile().length());
         
-        uploadFile(reverseDeltaFile, objectName, metadata);
+        uploadFile(blob.getFile(), objectName, metadata);
     }
     
     public static String getS3ObjectName(String blobNamespace, String fileType, long lookupVersion) {
@@ -214,5 +227,5 @@ public class S3Publisher implements Publisher {
         	snapshotIdx.add(Long.parseLong(key.substring(key.lastIndexOf("-") + 1)));
         } catch(NumberFormatException ignore) { }
     }
-    
+
 }

@@ -20,32 +20,36 @@ package how.hollow.consumer.infrastructure;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.netflix.hollow.api.client.HollowAnnouncementWatcher;
+import com.netflix.hollow.api.consumer.HollowConsumer;
+import com.netflix.hollow.api.consumer.HollowConsumer.AnnouncementWatcher;
 import how.hollow.producer.infrastructure.S3Announcer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public class S3AnnouncementWatcher extends HollowAnnouncementWatcher {
+public class S3AnnouncementWatcher implements AnnouncementWatcher {
     
     private final AmazonS3 s3;
     private final String bucketName;
     private final String blobNamespace;
     
+    private final List<HollowConsumer> subscribedConsumers;
+
     private long latestVersion;
+    
     
     public S3AnnouncementWatcher(AWSCredentials credentials, String bucketName, String blobNamespace) {
         this.s3 = new AmazonS3Client(credentials);
         this.bucketName = bucketName;
         this.blobNamespace = blobNamespace;
+        this.subscribedConsumers = Collections.synchronizedList(new ArrayList<HollowConsumer>());
         
         this.latestVersion = readLatestVersion();
-    }
 
-    @Override
-    public long getLatestVersion() {
-        return latestVersion;
+        setupPollingThread();
     }
-
-    @Override
-    public void subscribeToEvents() {
+    
+    public void setupPollingThread() {
         Thread t = new Thread(new Runnable() {
             public void run() {
                 while(true) {
@@ -53,7 +57,8 @@ public class S3AnnouncementWatcher extends HollowAnnouncementWatcher {
                         long currentVersion = readLatestVersion();
                         if(latestVersion != currentVersion) {
                             latestVersion = currentVersion;
-                            triggerAsyncRefresh();
+                            for(HollowConsumer consumer : subscribedConsumers)
+                                consumer.triggerAsyncRefresh();
                         }
                         
                         Thread.sleep(1000);
@@ -64,8 +69,19 @@ public class S3AnnouncementWatcher extends HollowAnnouncementWatcher {
             }
         });
         
+        t.setName("hollow-s3-announcementwatcher-poller");
         t.setDaemon(true);
         t.start();
+    }
+
+    @Override
+    public long getLatestVersion() {
+        return latestVersion;
+    }
+
+    @Override
+    public void subscribeToUpdates(HollowConsumer consumer) {
+        subscribedConsumers.add(consumer);
     }
     
     

@@ -4,17 +4,17 @@ import com.netflix.hollow.api.objects.HollowObject;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
 
 @SuppressWarnings("all")
-public class StringHollow extends HollowObject {
+public class HString extends HollowObject {
 
-    public StringHollow(StringDelegate delegate, int ordinal) {
+    public HString(StringDelegate delegate, int ordinal) {
         super(delegate, ordinal);
     }
 
-    public String _getValue() {
+    public String getValue() {
         return delegate().getValue(ordinal);
     }
 
-    public boolean _isValueEqual(String testValue) {
+    public boolean isValueEqual(String testValue) {
         return delegate().isValueEqual(ordinal, testValue);
     }
 

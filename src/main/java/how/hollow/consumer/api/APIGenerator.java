@@ -77,10 +77,11 @@ public class APIGenerator {
             }
         }
         
-        HollowAPIGenerator codeGenerator = new HollowAPIGenerator(
-                                                    GENERATED_API_NAME, 
-                                                    GENERATED_API_PACKAGE, 
-                                                    stateEngine);
+        HollowAPIGenerator codeGenerator = new HollowAPIGenerator.Builder() 
+                                                    .withAPIClassname(GENERATED_API_NAME) 
+                                                    .withPackageName(GENERATED_API_PACKAGE) 
+                                                    .withDataModel(stateEngine)
+                                                    .build();
         
         File apiCodeFolder = findProjectFolder(GENERATED_API_CODE_FOLDER);
         
