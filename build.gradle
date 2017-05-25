@@ -13,9 +13,9 @@ repositories {
 }
  
 dependencies {
-    compile 'com.netflix.hollow:hollow:2.6.0'
-    compile 'com.netflix.hollow:hollow-diff-ui:2.6.0'
-    compile 'com.netflix.hollow:hollow-explorer-ui:2.6.0'
+    compile 'com.netflix.hollow:hollow:2.6.2'
+    compile 'com.netflix.hollow:hollow-diff-ui:2.6.2'
+    compile 'com.netflix.hollow:hollow-explorer-ui:2.6.2'
     compile 'org.eclipse.jetty:jetty-server:9.4.2.v20170220'
 
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.49'

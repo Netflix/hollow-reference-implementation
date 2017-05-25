@@ -14,21 +14,21 @@
     <dependency>
       <groupId>com.netflix.hollow</groupId>
       <artifactId>hollow</artifactId>
-      <version>2.6.0</version>
+      <version>2.6.2</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.netflix.hollow</groupId>
       <artifactId>hollow-diff-ui</artifactId>
-      <version>2.6.0</version>
+      <version>2.6.2</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.netflix.hollow</groupId>
       <artifactId>hollow-explorer-ui</artifactId>
-      <version>2.6.0</version>
+      <version>2.6.2</version>
       <scope>compile</scope>
     </dependency>
 

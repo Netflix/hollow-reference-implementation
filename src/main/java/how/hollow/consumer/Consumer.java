@@ -27,7 +27,6 @@ import how.hollow.consumer.api.generated.Movie;
 import how.hollow.consumer.api.generated.MovieAPI;
 import how.hollow.consumer.api.generated.MovieAPIHashIndex;
 import how.hollow.consumer.api.generated.MoviePrimaryKeyIndex;
-import how.hollow.consumer.history.ConsumerHistoryListener;
 import how.hollow.producer.Producer;
 import java.io.File;
 
@@ -38,15 +37,12 @@ public class Consumer {
         
         System.out.println("I AM THE CONSUMER.  I WILL READ FROM " + publishDir.getAbsolutePath());
 
-        ConsumerHistoryListener historyListener = new ConsumerHistoryListener();
-        
         HollowConsumer.BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir);
         HollowConsumer.AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir);
         
         HollowConsumer consumer = HollowConsumer.withBlobRetriever(blobRetriever)
                                                 .withAnnouncementWatcher(announcementWatcher)
                                                 .withGeneratedAPIClass(MovieAPI.class)
-                                                .withRefreshListener(historyListener)
                                                 .build();
         
         consumer.triggerRefresh();
@@ -54,7 +50,7 @@ public class Consumer {
         hereIsHowToUseTheDataProgrammatically(consumer);
         
         /// start a history server on port 7777
-        HollowHistoryUIServer historyServer = new HollowHistoryUIServer(historyListener.getHistory(), 7777);
+        HollowHistoryUIServer historyServer = new HollowHistoryUIServer(consumer, 7777);
         historyServer.start();
         
         /// start an explorer server on port 7778
