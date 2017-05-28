@@ -7,6 +7,10 @@ plugins {
 }
  
 apply plugin: 'java'
+compileJava {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
  
 repositories {
   jcenter()
@@ -24,4 +28,14 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     
     testCompile 'junit:junit:4.11'
+}
+
+task( producer, dependsOn: jar, type: JavaExec ) {
+    main = 'how.hollow.producer.Producer'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task( consumer, dependsOn: jar, type: JavaExec ) {
+    main = 'how.hollow.consumer.Consumer'
+    classpath = sourceSets.main.runtimeClasspath
 }
