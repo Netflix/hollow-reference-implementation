@@ -1,6 +1,11 @@
 /build/
 /bin/
+/target/
 .classpath
 .gradle
 .project
 .settings
+**.ipr
+**.iml
+**.iws
+.idea
