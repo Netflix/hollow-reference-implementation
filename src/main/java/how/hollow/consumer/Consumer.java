@@ -37,8 +37,8 @@ public class Consumer {
         
         System.out.println("I AM THE CONSUMER.  I WILL READ FROM " + publishDir.getAbsolutePath());
 
-        HollowConsumer.BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir);
-        HollowConsumer.AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir);
+        HollowConsumer.BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir.toPath());
+        HollowConsumer.AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir.toPath());
         
         HollowConsumer consumer = HollowConsumer.withBlobRetriever(blobRetriever)
                                                 .withAnnouncementWatcher(announcementWatcher)

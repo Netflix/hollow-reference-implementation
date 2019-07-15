@@ -42,11 +42,11 @@ public class Producer {
         
         System.out.println("I AM THE PRODUCER.  I WILL PUBLISH TO " + publishDir.getAbsolutePath());
         
-        Publisher publisher = new HollowFilesystemPublisher(publishDir);
-        Announcer announcer = new HollowFilesystemAnnouncer(publishDir);
+        Publisher publisher = new HollowFilesystemPublisher(publishDir.toPath());
+        Announcer announcer = new HollowFilesystemAnnouncer(publishDir.toPath());
         
-        BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir);
-        AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir);
+        BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir.toPath());
+        AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir.toPath());
         
         HollowProducer producer = HollowProducer.withPublisher(publisher)
                                                 .withAnnouncer(announcer)
