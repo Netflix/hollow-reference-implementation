@@ -8,7 +8,7 @@ public class ActorTypeAPI extends HollowObjectTypeAPI {
 
     private final ActorDelegateLookupImpl delegateLookupImpl;
 
-    ActorTypeAPI(MovieAPI api, HollowObjectTypeDataAccess typeDataAccess) {
+    public ActorTypeAPI(MovieAPI api, HollowObjectTypeDataAccess typeDataAccess) {
         super(api, typeDataAccess, new String[] {
             "actorId",
             "actorName"

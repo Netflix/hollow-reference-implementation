@@ -12,7 +12,7 @@ public class MovieDelegateCachedImpl extends HollowObjectAbstractDelegate implem
     private final Integer id;
     private final int titleOrdinal;
     private final int actorsOrdinal;
-   private MovieTypeAPI typeAPI;
+    private MovieTypeAPI typeAPI;
 
     public MovieDelegateCachedImpl(MovieTypeAPI typeAPI, int ordinal) {
         this.id = typeAPI.getIdBoxed(ordinal);
@@ -22,6 +22,8 @@ public class MovieDelegateCachedImpl extends HollowObjectAbstractDelegate implem
     }
 
     public int getId(int ordinal) {
+        if(id == null)
+            return Integer.MIN_VALUE;
         return id.intValue();
     }
 

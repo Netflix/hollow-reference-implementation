@@ -1,5 +1,7 @@
 package how.hollow.consumer.api.generated;
 
+import com.netflix.hollow.api.consumer.HollowConsumer;
+import com.netflix.hollow.api.consumer.index.UniqueKeyIndex;
 import com.netflix.hollow.api.objects.HollowObject;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
 
@@ -42,6 +44,24 @@ public class Movie extends HollowObject {
 
     protected MovieDelegate delegate() {
         return (MovieDelegate)delegate;
+    }
+
+    /**
+     * Creates a unique key index for {@code Movie} that has a primary key.
+     * The primary key is represented by the type {@code int}.
+     * <p>
+     * By default the unique key index will not track updates to the {@code consumer} and thus
+     * any changes will not be reflected in matched results.  To track updates the index must be
+     * {@link HollowConsumer#addRefreshListener(HollowConsumer.RefreshListener) registered}
+     * with the {@code consumer}
+     *
+     * @param consumer the consumer
+     * @return the unique key index
+     */
+    public static UniqueKeyIndex<Movie, Integer> uniqueIndex(HollowConsumer consumer) {
+        return UniqueKeyIndex.from(consumer, Movie.class)
+            .bindToPrimaryKey()
+            .usingPath("id", int.class);
     }
 
 }

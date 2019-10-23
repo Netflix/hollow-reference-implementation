@@ -10,25 +10,29 @@
   <name>Netflix Hollow Reference Implementation</name>
   <url>http://hollow.how/quick-start</url>
 
+  <properties>
+    <hollow.version>4.7.12</hollow.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.netflix.hollow</groupId>
       <artifactId>hollow</artifactId>
-      <version>4.7.1</version>
+      <version>${hollow.version}</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.netflix.hollow</groupId>
       <artifactId>hollow-diff-ui</artifactId>
-      <version>4.7.1</version>
+      <version>${hollow.version}</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.netflix.hollow</groupId>
       <artifactId>hollow-explorer-ui</artifactId>
-      <version>4.7.1</version>
+      <version>${hollow.version}</version>
       <scope>compile</scope>
     </dependency>
 
