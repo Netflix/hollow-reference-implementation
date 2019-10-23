@@ -1,5 +1,6 @@
 package how.hollow.consumer.api.generated;
 
+import com.netflix.hollow.api.consumer.HollowConsumer;
 import com.netflix.hollow.api.objects.HollowObject;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
 

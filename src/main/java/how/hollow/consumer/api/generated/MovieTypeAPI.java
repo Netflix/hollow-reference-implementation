@@ -8,7 +8,7 @@ public class MovieTypeAPI extends HollowObjectTypeAPI {
 
     private final MovieDelegateLookupImpl delegateLookupImpl;
 
-    MovieTypeAPI(MovieAPI api, HollowObjectTypeDataAccess typeDataAccess) {
+    public MovieTypeAPI(MovieAPI api, HollowObjectTypeDataAccess typeDataAccess) {
         super(api, typeDataAccess, new String[] {
             "id",
             "title",

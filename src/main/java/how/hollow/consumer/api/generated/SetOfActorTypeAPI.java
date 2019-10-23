@@ -10,7 +10,7 @@ public class SetOfActorTypeAPI extends HollowSetTypeAPI {
 
     private final HollowSetLookupDelegate delegateLookupImpl;
 
-    SetOfActorTypeAPI(MovieAPI api, HollowSetTypeDataAccess dataAccess) {
+    public SetOfActorTypeAPI(MovieAPI api, HollowSetTypeDataAccess dataAccess) {
         super(api, dataAccess);
         this.delegateLookupImpl = new HollowSetLookupDelegate(this);
     }
