@@ -129,6 +129,7 @@ public class ExampleTest {
         .build());
 
     MoviePrimaryKeyIndex index = new MoviePrimaryKeyIndex(consumer);
+    assertNotNull(index.findMatch(movie.id));
     assertNull(index.findMatch(newMovie.id));
 
     announceNewVersion(2L, new HollowWriteStateEngineBuilder()
@@ -136,6 +137,7 @@ public class ExampleTest {
         .add(newMovie)
         .build());
 
+    assertNotNull(index.findMatch(movie.id));
     assertNotNull(index.findMatch(newMovie.id));
     assertEquals(newMovie.title, index.findMatch(newMovie.id).getTitle().getValue());
   }
