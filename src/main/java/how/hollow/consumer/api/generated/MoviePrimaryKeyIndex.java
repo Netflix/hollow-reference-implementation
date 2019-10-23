@@ -1,34 +1,42 @@
 package how.hollow.consumer.api.generated;
 
 import com.netflix.hollow.api.consumer.HollowConsumer;
-import com.netflix.hollow.api.custom.HollowAPI;
+import com.netflix.hollow.api.consumer.index.AbstractHollowUniqueKeyIndex;
+import com.netflix.hollow.api.consumer.index.HollowUniqueKeyIndex;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
-import com.netflix.hollow.core.index.HollowPrimaryKeyIndex;
-import com.netflix.hollow.core.read.engine.HollowReadStateEngine;
 
-public class MoviePrimaryKeyIndex implements HollowConsumer.RefreshListener {
-
-    private HollowPrimaryKeyIndex idx;
-    private MovieAPI api;
+/**
+ * @deprecated see {@link com.netflix.hollow.api.consumer.index.UniqueKeyIndex} which can be built as follows:
+ * <pre>{@code
+ *     UniqueKeyIndex<Movie, K> uki = UniqueKeyIndex.from(consumer, Movie.class)
+ *         .usingBean(k);
+ *     Movie m = uki.findMatch(k);
+ * }</pre>
+ * where {@code K} is a class declaring key field paths members, annotated with
+ * {@link com.netflix.hollow.api.consumer.index.FieldPath}, and {@code k} is an instance of
+ * {@code K} that is the key to find the unique {@code Movie} object.
+ */
+@Deprecated
+@SuppressWarnings("all")
+public class MoviePrimaryKeyIndex extends AbstractHollowUniqueKeyIndex<MovieAPI, Movie> implements HollowUniqueKeyIndex<Movie> {
 
     public MoviePrimaryKeyIndex(HollowConsumer consumer) {
-        this(consumer, ((HollowObjectSchema)consumer.getStateEngine().getSchema("Movie")).getPrimaryKey().getFieldPaths());
+        this(consumer, true);
+    }
+
+    public MoviePrimaryKeyIndex(HollowConsumer consumer, boolean isListenToDataRefresh) {
+        this(consumer, isListenToDataRefresh, ((HollowObjectSchema)consumer.getStateEngine().getNonNullSchema("Movie")).getPrimaryKey().getFieldPaths());
     }
 
     public MoviePrimaryKeyIndex(HollowConsumer consumer, String... fieldPaths) {
-        consumer.getRefreshLock().lock();
-        try {
-            this.api = (MovieAPI)consumer.getAPI();
-            this.idx = new HollowPrimaryKeyIndex(consumer.getStateEngine(), "Movie", fieldPaths);
-            idx.listenForDeltaUpdates();
-            consumer.addRefreshListener(this);
-        } catch(ClassCastException cce) {
-            throw new ClassCastException("The HollowConsumer provided was not created with the MovieAPI generated API class.");
-        } finally {
-            consumer.getRefreshLock().unlock();
-        }
+        this(consumer, true, fieldPaths);
     }
 
+    public MoviePrimaryKeyIndex(HollowConsumer consumer, boolean isListenToDataRefresh, String... fieldPaths) {
+        super(consumer, "Movie", isListenToDataRefresh, fieldPaths);
+    }
+
+    @Override
     public Movie findMatch(Object... keys) {
         int ordinal = idx.getMatchingOrdinal(keys);
         if(ordinal == -1)
@@ -36,19 +44,4 @@ public class MoviePrimaryKeyIndex implements HollowConsumer.RefreshListener {
         return api.getMovie(ordinal);
     }
 
-    @Override public void snapshotUpdateOccurred(HollowAPI api, HollowReadStateEngine stateEngine, long version) throws Exception {
-        idx.detachFromDeltaUpdates();
-        idx = new HollowPrimaryKeyIndex(stateEngine, idx.getPrimaryKey());
-        idx.listenForDeltaUpdates();
-        this.api = (MovieAPI)api;
-    }
-
-    @Override public void deltaUpdateOccurred(HollowAPI api, HollowReadStateEngine stateEngine, long version) throws Exception {
-        this.api = (MovieAPI)api;
-    }
-
-    @Override public void refreshStarted(long currentVersion, long requestedVersion) { }
-    @Override public void blobLoaded(HollowConsumer.Blob transition) { }
-    @Override public void refreshSuccessful(long beforeVersion, long afterVersion, long requestedVersion) { }
-    @Override public void refreshFailed(long beforeVersion, long afterVersion, long requestedVersion, Throwable failureCause) { }
 }
