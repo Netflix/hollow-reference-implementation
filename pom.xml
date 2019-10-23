@@ -11,7 +11,7 @@
   <url>http://hollow.how/quick-start</url>
 
   <properties>
-    <hollow.version>4.7.1</hollow.version>
+    <hollow.version>4.7.12</hollow.version>
   </properties>
 
   <dependencies>
