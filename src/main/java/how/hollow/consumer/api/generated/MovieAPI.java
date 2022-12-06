@@ -1,5 +1,6 @@
 package how.hollow.consumer.api.generated;
 
+import java.util.Objects;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -161,7 +162,8 @@ public class MovieAPI extends HollowAPI  {
         return movieTypeAPI;
     }
     public Collection<HString> getAllHString() {
-        return new AllHollowRecordCollection<HString>(getDataAccess().getTypeDataAccess("String").getTypeState()) {
+        HollowTypeDataAccess tda = Objects.requireNonNull(getDataAccess().getTypeDataAccess("String"), "type not loaded or does not exist in dataset; type=String");
+        return new AllHollowRecordCollection<HString>(tda.getTypeState()) {
             protected HString getForOrdinal(int ordinal) {
                 return getHString(ordinal);
             }
@@ -172,7 +174,8 @@ public class MovieAPI extends HollowAPI  {
         return (HString)stringProvider.getHollowObject(ordinal);
     }
     public Collection<Actor> getAllActor() {
-        return new AllHollowRecordCollection<Actor>(getDataAccess().getTypeDataAccess("Actor").getTypeState()) {
+        HollowTypeDataAccess tda = Objects.requireNonNull(getDataAccess().getTypeDataAccess("Actor"), "type not loaded or does not exist in dataset; type=Actor");
+        return new AllHollowRecordCollection<Actor>(tda.getTypeState()) {
             protected Actor getForOrdinal(int ordinal) {
                 return getActor(ordinal);
             }
@@ -183,7 +186,8 @@ public class MovieAPI extends HollowAPI  {
         return (Actor)actorProvider.getHollowObject(ordinal);
     }
     public Collection<SetOfActor> getAllSetOfActor() {
-        return new AllHollowRecordCollection<SetOfActor>(getDataAccess().getTypeDataAccess("SetOfActor").getTypeState()) {
+        HollowTypeDataAccess tda = Objects.requireNonNull(getDataAccess().getTypeDataAccess("SetOfActor"), "type not loaded or does not exist in dataset; type=SetOfActor");
+        return new AllHollowRecordCollection<SetOfActor>(tda.getTypeState()) {
             protected SetOfActor getForOrdinal(int ordinal) {
                 return getSetOfActor(ordinal);
             }
@@ -194,7 +198,8 @@ public class MovieAPI extends HollowAPI  {
         return (SetOfActor)setOfActorProvider.getHollowObject(ordinal);
     }
     public Collection<Movie> getAllMovie() {
-        return new AllHollowRecordCollection<Movie>(getDataAccess().getTypeDataAccess("Movie").getTypeState()) {
+        HollowTypeDataAccess tda = Objects.requireNonNull(getDataAccess().getTypeDataAccess("Movie"), "type not loaded or does not exist in dataset; type=Movie");
+        return new AllHollowRecordCollection<Movie>(tda.getTypeState()) {
             protected Movie getForOrdinal(int ordinal) {
                 return getMovie(ordinal);
             }

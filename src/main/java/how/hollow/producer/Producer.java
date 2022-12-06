@@ -36,7 +36,7 @@ public class Producer {
     public static final String SCRATCH_DIR = System.getProperty("java.io.tmpdir");
     private static final long MIN_TIME_BETWEEN_CYCLES = 10000;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         File publishDir = new File(SCRATCH_DIR, "publish-dir");
         publishDir.mkdir();
         

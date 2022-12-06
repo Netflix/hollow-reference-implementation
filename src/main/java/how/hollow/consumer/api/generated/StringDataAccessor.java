@@ -8,7 +8,7 @@ import com.netflix.hollow.core.read.engine.HollowReadStateEngine;
 @SuppressWarnings("all")
 public class StringDataAccessor extends AbstractHollowDataAccessor<HString> {
 
-    public static final String TYPE = "HString";
+    public static final String TYPE = "String";
     private MovieAPI api;
 
     public StringDataAccessor(HollowConsumer consumer) {
