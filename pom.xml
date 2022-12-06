@@ -12,6 +12,7 @@
 
   <properties>
     <hollow.version>7.1.7</hollow.version>
+    <aws.version>1.12.353</aws.version>
   </properties>
 
   <dependencies>
@@ -39,14 +40,14 @@
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-s3</artifactId>
-      <version>1.11.49</version>
+      <version>${aws.version}</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-dynamodb</artifactId>
-      <version>1.11.49</version>
+      <version>${aws.version}</version>
       <scope>compile</scope>
     </dependency>
 
