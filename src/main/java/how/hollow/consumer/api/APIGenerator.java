@@ -23,7 +23,17 @@ import com.netflix.hollow.core.write.objectmapper.HollowObjectMapper;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Objects;
 
+/**
+ * <ul>
+ *     <li>or use the gradle generation task with `./gradlew generateHollowConsumerApi`</li>
+ *     <li>or use the maven generation task with `mvn hollow:generate-as-project-sources`</li>
+ * </ul>
+ * (maven generation is broken atm due the old version of hollow in its dependencies,
+ * please vote for <a href="https://github.com/IgorPerikov/hollow-maven-plugin/pull/17">this PR</a>)
+ */
 public class APIGenerator {
     
     private static final String GENERATED_API_NAME = "MovieAPI";
@@ -36,10 +46,9 @@ public class APIGenerator {
     
     /**
      * Run this main method to (re)generate the API based on the POJOs defining the data model.
-     * 
      * If the first arg is populated, it will specify the root project folder.  If not, we will attempt to discover the root project folder.
      */
-    public static void main(String args[]) throws ClassNotFoundException, IOException {
+    public static void main(String[] args) throws ClassNotFoundException, IOException {
         File projectRootFolder;
         
         if(args.length > 0)
@@ -76,21 +85,32 @@ public class APIGenerator {
                 mapper.initializeTypeState(Class.forName(DATA_MODEL_PACKAGE + "." + discoveredType));
             }
         }
-        
-        HollowAPIGenerator codeGenerator = new HollowAPIGenerator.Builder() 
-                                                    .withAPIClassname(GENERATED_API_NAME) 
-                                                    .withPackageName(GENERATED_API_PACKAGE) 
-                                                    .withDataModel(stateEngine)
-                                                    .build();
-        
+
         File apiCodeFolder = findProjectFolder(GENERATED_API_CODE_FOLDER);
-        
+
         apiCodeFolder.mkdirs();
-        
+
         for(File f : apiCodeFolder.listFiles())
             f.delete();
-        
-        codeGenerator.generateFiles(apiCodeFolder);
+
+        HollowAPIGenerator codeGenerator = new HollowAPIGenerator.Builder()
+                .withAPIClassname(GENERATED_API_NAME)
+                .withPackageName(GENERATED_API_PACKAGE)
+                .withDataModel(stateEngine)
+                .withDestination(apiCodeFolder.toPath())
+                .withParameterizeAllClassNames(false)
+                .withAggressiveSubstitutions(false)
+                .withBooleanFieldErgonomics(true)
+                .reservePrimaryKeyIndexForTypeWithPrimaryKey(true)
+                .withHollowPrimitiveTypes(true)
+                .withVerboseToString(true)
+                .withRestrictApiToFieldType()
+                .withPackageGrouping()
+                .withErgonomicShortcuts()
+                .withClassPostfix("")
+                .build();
+
+        codeGenerator.generateSourceFiles();
     }
     
     /**
@@ -124,13 +144,7 @@ public class APIGenerator {
      * Assumption: The root project folder contains a file called 'build.gradle' 
      */
     private static boolean containsBuildGradle(File f) {
-        return f.listFiles(new FilenameFilter() {
-            
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.equals("build.gradle");
-            }
-        }).length > 0;
+        return f.listFiles((dir, name) -> name.equals("build.gradle")).length > 0;
     }
     
 }

@@ -1,4 +1,9 @@
-package how.hollow.consumer.api.generated;
+package how.hollow.consumer.api.generated.core;
+
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.Actor;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
 
 import com.netflix.hollow.api.objects.provider.HollowFactory;
 import com.netflix.hollow.core.read.dataaccess.HollowTypeDataAccess;

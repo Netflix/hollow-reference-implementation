@@ -1,5 +1,9 @@
 package how.hollow.consumer.api.generated;
 
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
+
 import java.util.Objects;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +31,7 @@ import com.netflix.hollow.api.sampling.SampleResult;
 import com.netflix.hollow.core.util.AllHollowRecordCollection;
 
 @SuppressWarnings("all")
-public class MovieAPI extends HollowAPI  {
+public class MovieAPI extends HollowAPI implements  HollowConsumerAPI.StringRetriever {
 
     private final HollowObjectCreationSampler objectCreationSampler;
 

@@ -15,7 +15,10 @@
  *     limitations under the License.
  *
  */
-package how.hollow.producer.datamodel;
+package how.hollow.producer;
+
+import how.hollow.producer.datamodel.Actor;
+import how.hollow.producer.datamodel.Movie;
 
 import java.util.ArrayList;
 import java.util.HashSet;

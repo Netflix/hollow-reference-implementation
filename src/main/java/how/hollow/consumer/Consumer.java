@@ -44,19 +44,19 @@ public class Consumer {
                                                 .withAnnouncementWatcher(announcementWatcher)
                                                 .withGeneratedAPIClass(MovieAPI.class)
                                                 .build();
-        
+
         consumer.triggerRefresh();
-        
+
         hereIsHowToUseTheDataProgrammatically(consumer);
-        
+
         /// start a history server on port 7777
         HollowHistoryUIServer historyServer = new HollowHistoryUIServer(consumer, 7777);
         historyServer.start();
-        
+
         /// start an explorer server on port 7778
         HollowExplorerUIServer explorerServer = new HollowExplorerUIServer(consumer, 7778);
         explorerServer.start();
-        
+
         historyServer.join();
     }
 
@@ -70,13 +70,13 @@ public class Consumer {
 
         /// find the movie for a some known ID
         Movie foundMovie = idx.findMatch(1000004);
-        
+
         /// for each actor in that movie
         for(Actor actor : foundMovie.getActors()) {
             /// get all of movies of which they are cast members
-            moviesByActorName.findMatches(actor.getActorName().getValue()).forEach(movie -> {
+            moviesByActorName.findMatches(actor.getActorName()).forEach(movie -> {
                 /// and just print the result
-                System.out.println(actor.getActorName().getValue() + " starred in " + movie.getTitle().getValue());
+                System.out.println(actor.getActorName() + " starred in " + movie.getTitle());
             });
         }
     }

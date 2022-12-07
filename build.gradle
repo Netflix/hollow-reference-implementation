@@ -1,33 +1,40 @@
 buildscript {
-  repositories { jcenter() }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.netflix.nebula:nebula-hollow-plugin:3.+"
+    }
 }
- 
+
 plugins {
-  id 'nebula.netflixoss' version '3.5.2'
+    id "nebula.netflixoss" version "11.1.1"
 }
  
 apply plugin: 'java'
+apply plugin: 'nebula.hollow'
 compileJava {
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 11
+    targetCompatibility = 11
 }
- 
-repositories {
-  jcenter()
-}
- 
-dependencies {
-    compile 'com.netflix.hollow:hollow:2.6.8'
-    compile 'com.netflix.hollow:hollow-diff-ui:2.6.8'
-    compile 'com.netflix.hollow:hollow-explorer-ui:2.6.8'
-    compile 'org.eclipse.jetty:jetty-server:9.4.2.v20170220'
 
-    compile 'com.amazonaws:aws-java-sdk-s3:1.11.49'
-    compile 'com.amazonaws:aws-java-sdk-dynamodb:1.11.49'
+repositories {
+    mavenCentral()
+}
+
+def hollowVersion = "7.1.7"
+def awsVersion = "1.12.353"
+
+dependencies {
+    implementation "com.netflix.hollow:hollow:${hollowVersion}"
+    implementation "com.netflix.hollow:hollow-diff-ui:${hollowVersion}"
+    implementation "com.netflix.hollow:hollow-explorer-ui:${hollowVersion}"
+    implementation "org.eclipse.jetty:jetty-server:9.4.2.v20170220"
+
+    implementation "com.amazonaws:aws-java-sdk-s3:${awsVersion}"
+    implementation "com.amazonaws:aws-java-sdk-dynamodb:${awsVersion}"
     
-    compile 'commons-io:commons-io:2.4'
-    
-    testCompile 'junit:junit:4.11'
+    implementation 'commons-io:commons-io:2.11.0'
 }
 
 task( producer, dependsOn: jar, type: JavaExec ) {
@@ -38,4 +45,20 @@ task( producer, dependsOn: jar, type: JavaExec ) {
 task( consumer, dependsOn: jar, type: JavaExec ) {
     main = 'how.hollow.consumer.Consumer'
     classpath = sourceSets.main.runtimeClasspath
+}
+
+hollow {
+    packagesToScan = ['how.hollow.producer.datamodel']
+    apiClassName = 'MovieAPI'
+    apiPackageName = 'how.hollow.consumer.api.generated'
+    getterPrefix = ''
+    classPostfix = ''
+    usePackageGrouping = true
+    parameterizeAllClassNames = false
+    useAggressiveSubstitutions = false
+    useErgonomicShortcuts = true
+    reservePrimaryKeyIndexForTypeWithPrimaryKey = true
+    useHollowPrimitiveTypes = true
+    restrictApiToFieldType = true
+    useVerboseToString = true
 }

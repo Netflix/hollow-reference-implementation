@@ -1,4 +1,11 @@
-package how.hollow.consumer.api.generated;
+package how.hollow.consumer.api.generated.index;
+
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.MovieAPI;
+import how.hollow.consumer.api.generated.Movie;
+import how.hollow.consumer.api.generated.Actor;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
 
 import com.netflix.hollow.api.consumer.HollowConsumer;
 import com.netflix.hollow.core.index.HollowHashIndexResult;
@@ -24,7 +31,7 @@ import com.netflix.hollow.api.consumer.data.AbstractHollowOrdinalIterable;
 public class MovieAPIHashIndex extends AbstractHollowHashIndex<MovieAPI> {
 
     public MovieAPIHashIndex(HollowConsumer consumer, String queryType, String selectFieldPath, String... matchFieldPaths) {
-        super(consumer, true, queryType, selectFieldPath, matchFieldPaths);
+        super(consumer, false, queryType, selectFieldPath, matchFieldPaths);
     }
 
     public MovieAPIHashIndex(HollowConsumer consumer, boolean isListenToDataRefresh, String queryType, String selectFieldPath, String... matchFieldPaths) {

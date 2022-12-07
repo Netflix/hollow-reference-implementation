@@ -1,9 +1,15 @@
 package how.hollow.consumer.api.generated;
 
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.MovieAPI;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
+
 import com.netflix.hollow.api.consumer.HollowConsumer;
 import com.netflix.hollow.api.consumer.index.UniqueKeyIndex;
 import com.netflix.hollow.api.objects.HollowObject;
 import com.netflix.hollow.core.schema.HollowObjectSchema;
+import com.netflix.hollow.tools.stringifier.HollowRecordStringifier;
 
 @SuppressWarnings("all")
 public class Actor extends HollowObject {
@@ -16,11 +22,17 @@ public class Actor extends HollowObject {
         return delegate().getActorId(ordinal);
     }
 
-    public Integer getActorIdBoxed() {
-        return delegate().getActorIdBoxed(ordinal);
+
+
+    public String getActorName() {
+        return delegate().getActorName(ordinal);
     }
 
-    public HString getActorName() {
+    public boolean isActorNameEqual(String testValue) {
+        return delegate().isActorNameEqual(ordinal, testValue);
+    }
+
+    public HString getActorNameHollowReference() {
         int refOrdinal = delegate().getActorNameOrdinal(ordinal);
         if(refOrdinal == -1)
             return null;
@@ -37,6 +49,10 @@ public class Actor extends HollowObject {
 
     protected ActorDelegate delegate() {
         return (ActorDelegate)delegate;
+    }
+
+    public String toString() {
+        return new HollowRecordStringifier().stringify(this);
     }
 
     /**

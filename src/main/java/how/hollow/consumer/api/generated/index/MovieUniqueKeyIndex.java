@@ -1,9 +1,14 @@
-package how.hollow.consumer.api.generated;
+package how.hollow.consumer.api.generated.index;
+
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.MovieAPI;
+import how.hollow.consumer.api.generated.Movie;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
 
 import com.netflix.hollow.api.consumer.HollowConsumer;
 import com.netflix.hollow.api.consumer.index.AbstractHollowUniqueKeyIndex;
 import com.netflix.hollow.api.consumer.index.HollowUniqueKeyIndex;
-import com.netflix.hollow.core.schema.HollowObjectSchema;
 
 /**
  * @deprecated see {@link com.netflix.hollow.api.consumer.index.UniqueKeyIndex} which can be built as follows:
@@ -18,21 +23,13 @@ import com.netflix.hollow.core.schema.HollowObjectSchema;
  */
 @Deprecated
 @SuppressWarnings("all")
-public class MoviePrimaryKeyIndex extends AbstractHollowUniqueKeyIndex<MovieAPI, Movie> implements HollowUniqueKeyIndex<Movie> {
+public class MovieUniqueKeyIndex extends AbstractHollowUniqueKeyIndex<MovieAPI, Movie> implements HollowUniqueKeyIndex<Movie> {
 
-    public MoviePrimaryKeyIndex(HollowConsumer consumer) {
-        this(consumer, true);
+    public MovieUniqueKeyIndex(HollowConsumer consumer, String... fieldPaths) {
+        this(consumer, false, fieldPaths);
     }
 
-    public MoviePrimaryKeyIndex(HollowConsumer consumer, boolean isListenToDataRefresh) {
-        this(consumer, isListenToDataRefresh, ((HollowObjectSchema)consumer.getStateEngine().getNonNullSchema("Movie")).getPrimaryKey().getFieldPaths());
-    }
-
-    public MoviePrimaryKeyIndex(HollowConsumer consumer, String... fieldPaths) {
-        this(consumer, true, fieldPaths);
-    }
-
-    public MoviePrimaryKeyIndex(HollowConsumer consumer, boolean isListenToDataRefresh, String... fieldPaths) {
+    public MovieUniqueKeyIndex(HollowConsumer consumer, boolean isListenToDataRefresh, String... fieldPaths) {
         super(consumer, "Movie", isListenToDataRefresh, fieldPaths);
     }
 

@@ -61,14 +61,14 @@
     <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-engine</artifactId>
-        <version>5.8.1</version>
+        <version>5.9.0</version>
         <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
-      <version>11.0.12</version>
+      <version>9.4.10.v20180503</version>
     </dependency>
 
   </dependencies>
@@ -80,11 +80,38 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>11</source>
+          <target>11</target>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
+
+     <plugin>
+       <groupId>com.github.igorperikov</groupId>
+       <artifactId>hollow-maven-plugin</artifactId>
+       <version>1.0.0</version>
+       <configuration>
+         <apiClassName>MovieAPI</apiClassName>
+         <apiPackageName>how.hollow.consumer.api.generated</apiPackageName>
+         <packagesToScan>how.hollow.producer.datamodel</packagesToScan>
+         <!-- <useHollowPrimitiveTypes>true</useHollowPrimitiveTypes>-->
+         <!-- <useVerboseToString>true</useVerboseToString>-->
+         <!-- <parameterizeAllClassNames></parameterizeAllClassNames>-->
+         <!-- <useAggressiveSubstitutions></useAggressiveSubstitutions>-->
+         <!-- <useBooleanFieldErgonomics></useBooleanFieldErgonomics>-->
+         <!-- <reservePrimaryKeyIndexForTypeWithPrimaryKey></reservePrimaryKeyIndexForTypeWithPrimaryKey>-->
+         <!-- <useErgonomicShortcuts></useErgonomicShortcuts>-->
+         <!-- <usePackageGrouping></usePackageGrouping>-->
+         <!-- <restrictApiToFieldType></restrictApiToFieldType>-->
+       </configuration>
+       <executions>
+         <execution>
+           <goals>
+             <goal>generate-as-project-sources</goal>
+           </goals>
+         </execution>
+       </executions>
+     </plugin>
     </plugins>
   </build>
 

@@ -27,7 +27,7 @@ import com.netflix.hollow.api.producer.HollowProducer.Publisher;
 import com.netflix.hollow.api.producer.fs.HollowFilesystemAnnouncer;
 import com.netflix.hollow.api.producer.fs.HollowFilesystemPublisher;
 import how.hollow.producer.datamodel.Movie;
-import how.hollow.producer.datamodel.SourceDataRetriever;
+
 import java.io.File;
 
 
