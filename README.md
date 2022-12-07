@@ -25,3 +25,27 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+                                   
+# Build & Generation tasks
+
+you can build this project and generate consumer code with `gradle` or with `maven` build systems. 
+
+## Gradle
+
+```bash 
+# generate consumer java code 
+./gradlew generateHollowConsumerApi
+
+# build 
+./gradlew clean build 
+```
+
+## Maven 
+
+```bash 
+# generate consumer java code 
+mvn hollow:generate-as-project-sources
+
+# build 
+mvn clean package 
+```
