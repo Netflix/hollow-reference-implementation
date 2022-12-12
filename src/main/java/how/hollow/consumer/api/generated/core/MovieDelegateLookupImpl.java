@@ -1,4 +1,8 @@
-package how.hollow.consumer.api.generated;
+package how.hollow.consumer.api.generated.core;
+
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
 
 import com.netflix.hollow.api.objects.delegate.HollowObjectAbstractDelegate;
 import com.netflix.hollow.core.read.dataaccess.HollowObjectTypeDataAccess;
@@ -19,6 +23,16 @@ public class MovieDelegateLookupImpl extends HollowObjectAbstractDelegate implem
 
     public Integer getIdBoxed(int ordinal) {
         return typeAPI.getIdBoxed(ordinal);
+    }
+
+    public String getTitle(int ordinal) {
+        ordinal = typeAPI.getTitleOrdinal(ordinal);
+        return ordinal == -1 ? null : typeAPI.getAPI().getStringTypeAPI().getValue(ordinal);
+    }
+
+    public boolean isTitleEqual(int ordinal, String testValue) {
+        ordinal = typeAPI.getTitleOrdinal(ordinal);
+        return ordinal == -1 ? testValue == null : typeAPI.getAPI().getStringTypeAPI().isValueEqual(ordinal, testValue);
     }
 
     public int getTitleOrdinal(int ordinal) {

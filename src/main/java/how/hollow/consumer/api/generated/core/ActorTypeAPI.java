@@ -1,4 +1,9 @@
-package how.hollow.consumer.api.generated;
+package how.hollow.consumer.api.generated.core;
+
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.MovieAPI;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
 
 import com.netflix.hollow.api.custom.HollowObjectTypeAPI;
 import com.netflix.hollow.core.read.dataaccess.HollowObjectTypeDataAccess;
@@ -8,7 +13,7 @@ public class ActorTypeAPI extends HollowObjectTypeAPI {
 
     private final ActorDelegateLookupImpl delegateLookupImpl;
 
-    ActorTypeAPI(MovieAPI api, HollowObjectTypeDataAccess typeDataAccess) {
+    public ActorTypeAPI(MovieAPI api, HollowObjectTypeDataAccess typeDataAccess) {
         super(api, typeDataAccess, new String[] {
             "actorId",
             "actorName"

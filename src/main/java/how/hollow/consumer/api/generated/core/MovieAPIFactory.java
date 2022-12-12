@@ -1,4 +1,9 @@
-package how.hollow.consumer.api.generated;
+package how.hollow.consumer.api.generated.core;
+
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.MovieAPI;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
 
 import com.netflix.hollow.api.client.HollowAPIFactory;
 import com.netflix.hollow.api.custom.HollowAPI;
@@ -7,6 +12,7 @@ import com.netflix.hollow.core.read.dataaccess.HollowDataAccess;
 import java.util.Collections;
 import java.util.Set;
 
+@SuppressWarnings("all")
 public class MovieAPIFactory implements HollowAPIFactory {
 
     private final Set<String> cachedTypes;
@@ -26,6 +32,8 @@ public class MovieAPIFactory implements HollowAPIFactory {
 
     @Override
     public HollowAPI createAPI(HollowDataAccess dataAccess, HollowAPI previousCycleAPI) {
+        if (!(previousCycleAPI instanceof MovieAPI)) {
+            throw new ClassCastException(previousCycleAPI.getClass() + " not instance of MovieAPI");        }
         return new MovieAPI(dataAccess, cachedTypes, Collections.<String, HollowFactory<?>>emptyMap(), (MovieAPI) previousCycleAPI);
     }
 

@@ -27,7 +27,7 @@ import com.netflix.hollow.api.producer.HollowProducer.Publisher;
 import com.netflix.hollow.api.producer.fs.HollowFilesystemAnnouncer;
 import com.netflix.hollow.api.producer.fs.HollowFilesystemPublisher;
 import how.hollow.producer.datamodel.Movie;
-import how.hollow.producer.datamodel.SourceDataRetriever;
+
 import java.io.File;
 
 
@@ -36,17 +36,17 @@ public class Producer {
     public static final String SCRATCH_DIR = System.getProperty("java.io.tmpdir");
     private static final long MIN_TIME_BETWEEN_CYCLES = 10000;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         File publishDir = new File(SCRATCH_DIR, "publish-dir");
         publishDir.mkdir();
         
         System.out.println("I AM THE PRODUCER.  I WILL PUBLISH TO " + publishDir.getAbsolutePath());
         
-        Publisher publisher = new HollowFilesystemPublisher(publishDir);
-        Announcer announcer = new HollowFilesystemAnnouncer(publishDir);
+        Publisher publisher = new HollowFilesystemPublisher(publishDir.toPath());
+        Announcer announcer = new HollowFilesystemAnnouncer(publishDir.toPath());
         
-        BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir);
-        AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir);
+        BlobRetriever blobRetriever = new HollowFilesystemBlobRetriever(publishDir.toPath());
+        AnnouncementWatcher announcementWatcher = new HollowFilesystemAnnouncementWatcher(publishDir.toPath());
         
         HollowProducer producer = HollowProducer.withPublisher(publisher)
                                                 .withAnnouncer(announcer)

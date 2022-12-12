@@ -1,4 +1,10 @@
-package how.hollow.consumer.api.generated;
+package how.hollow.consumer.api.generated.collections;
+
+import com.netflix.hollow.core.type.*;
+import how.hollow.consumer.api.generated.MovieAPI;
+import how.hollow.consumer.api.generated.Actor;
+import how.hollow.consumer.api.generated.core.*;
+import how.hollow.consumer.api.generated.collections.*;
 
 import com.netflix.hollow.api.objects.HollowSet;
 import com.netflix.hollow.core.schema.HollowSetSchema;
