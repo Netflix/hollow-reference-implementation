@@ -28,6 +28,7 @@ import how.hollow.consumer.api.generated.Actor;
 import how.hollow.consumer.api.generated.Movie;
 import how.hollow.consumer.api.generated.MovieAPI;
 import how.hollow.producer.Producer;
+
 import java.io.File;
 
 public class Consumer {
